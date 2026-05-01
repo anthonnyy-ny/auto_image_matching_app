@@ -1,31 +1,46 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\User\Desktop\大学\大三下\专题\UI python\savefile.ui'
-#
-# Created by: PyQt5 UI code generator 5.9.2
-#
-# WARNING! All changes made in this file will be lost!
-
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(154, 91)
+        Dialog.resize(260, 120)
+        Dialog.setMinimumSize(QtCore.QSize(240, 110))
+
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../../../../../Downloads/pictureresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(":/background image/pictureresult.ico"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         Dialog.setWindowIcon(icon)
-        Dialog.setStyleSheet("")
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
+        self.verticalLayout.setContentsMargins(18, 14, 18, 14)
+        self.verticalLayout.setSpacing(8)
+        self.verticalLayout.setObjectName("verticalLayout")
+
         self.label = QtWidgets.QLabel(Dialog)
-        self.label.setGeometry(QtCore.QRect(10, 10, 121, 31))
-        self.label.setStyleSheet("font: 75 28pt \"MS Shell Dlg 2\";\n"
-"")
+        font = QtGui.QFont()
+        font.setFamily("Microsoft JhengHei UI")
+        font.setPointSize(22)
+        font.setBold(True)
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
+        self.verticalLayout.addWidget(self.label)
+
         self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setGeometry(QtCore.QRect(10, 50, 131, 21))
-        self.label_2.setStyleSheet("font: 10pt \"MS Shell Dlg 2\";\n"
-"")
+        font = QtGui.QFont()
+        font.setFamily("Microsoft JhengHei UI")
+        font.setPointSize(10)
+        self.label_2.setFont(font)
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_2.setWordWrap(True)
         self.label_2.setObjectName("label_2")
+        self.verticalLayout.addWidget(self.label_2)
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -34,15 +49,15 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "提示"))
         self.label.setText(_translate("Dialog", "保存成功"))
-        self.label_2.setText(_translate("Dialog", "文件已在此電腦:/downloads"))
+        self.label_2.setText(_translate("Dialog", "文件已保存到 Downloads"))
 
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()
     ui.setupUi(Dialog)
     Dialog.show()
     sys.exit(app.exec_())
-

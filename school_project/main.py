@@ -60,11 +60,11 @@ class splash_screen_controller(QtWidgets.QMainWindow):
         # CHANGE DESCRIPTION
 
         # Initial Text
-        self.ui.label_description.setText("<strong>WELCOME</strong> TO MY APPLICATION")
+        self.ui.label_description.setText("<strong>歡迎使用</strong> 圖片整理系統")
 
         # Change Texts
-        QtCore.QTimer.singleShot(1500, lambda: self.ui.label_description.setText("<strong>LOADING</strong> DATABASE"))
-        QtCore.QTimer.singleShot(3000, lambda: self.ui.label_description.setText("<strong>LOADING</strong> USER INTERFACE"))
+        QtCore.QTimer.singleShot(1500, lambda: self.ui.label_description.setText("<strong>讀取</strong> 圖片資料"))
+        QtCore.QTimer.singleShot(3000, lambda: self.ui.label_description.setText("<strong>載入</strong> 使用介面"))
 
 
         ## SHOW ==> MAIN WINDOW
@@ -102,6 +102,8 @@ class splash_screen_controller(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
+    QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QtWidgets.QApplication(sys.argv)
     ui = splash_screen_controller()
    # ui.show()

@@ -719,7 +719,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         now = datetime.now()
         current_time = now.strftime(" %m %d %Y %H %M %S")
 
-        download_dir="C:/Users/User/Downloads/"+str("Classification")+current_time
+        download_dir=os.path.join(os.path.expanduser("~"), "Downloads", "Classification" + current_time)
         
         #C:/Users/User/Downloads
         try :
@@ -732,7 +732,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         G=0
         
         for group in class_list.CF_list:
-            buf_dir=download_dir+"\Group"+str(G)
+            buf_dir=os.path.join(download_dir, "Group" + str(G))
             #print("\nreate dir : ",buf_dir," ====>   \n")
             os.mkdir(buf_dir)
             for buf_img in group.same:
@@ -741,7 +741,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
                 buf_filename=transfer_filename(buf_img.filename)
                 #print("store img filename : ",buf_filename)
                 #D:/store_img
-                cv2.imwrite(buf_dir+"/"+str(buf_filename), store_img)
+                cv2.imwrite(os.path.join(buf_dir, str(buf_filename)), store_img)
             G+=1
         print("store img end")
         self.IsStore+=1
