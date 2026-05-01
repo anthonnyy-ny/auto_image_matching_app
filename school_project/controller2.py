@@ -39,6 +39,8 @@ from UI2 import Ui_mainWindow
 from savefile import Ui_Dialog
 
 import class_list
+from app_paths import debug_output_dir, default_open_dir, downloads_dir
+from image_utils import iter_image_files, jpg_filename
 
 
 
@@ -238,6 +240,8 @@ class IMG:
 
     def img_shape(self):        #check
 
+        if self.img is None:
+            raise ValueError("Image could not be read: " + self.name)
         hight,width=self.img.shape[:2]
         if((width>=1000)&(hight>=1000)):
             self.img=new_resize_img(self.img,2**(-1))
@@ -297,16 +301,16 @@ class BUF_IMG:
         img=self.img
         b_img=self.img
         cv2.circle(b_img,(int(self.y),int(self.x)),20,(0,0,255),-1)
-        cv2.imwrite("D:/source/vscode/python_project/check_img/buf_"+ name +".jpg", b_img)
+        cv2.imwrite(str(debug_output_dir() / ("buf_" + name + ".jpg")), b_img)
         self.img=img
 
 def read_directory(directory_name): #check
 
-   for filename in os.listdir(directory_name):
+   for image_path in iter_image_files(directory_name):
 
-        name_string = (directory_name + "/" + filename)
+        name_string = str(image_path)
 
-        buf=IMG(name_string,filename)
+        buf=IMG(name_string,image_path.name)
         buf.img_shape()
         buf.create_sift()
         img.append(buf)
@@ -320,12 +324,12 @@ def drawKeyPoint(img_2, kp_2, img_1,kp_1, Three,save_img):
                                                     #畫特定kp    特徵點是否要畫
     showIMG("img_out", img_out)
     print("key point match len : ",len(Three))
-    cv2.imwrite("D:/source/vscode/python_project/check_img/out_img_"+str(save_img) +".jpg", img_out)
+    cv2.imwrite(str(debug_output_dir() / ("out_img_" + str(save_img) + ".jpg")), img_out)
 
 def showCutIMG(img_1,img_2,save_img):
     print("save img : ",save_img,"\n")
-    cv2.imwrite("D:/source/vscode/python_project/check_img/big_"+str(save_img)+".jpg", img_1)
-    cv2.imwrite("D:/source/vscode/python_project/check_img/small_"+str(save_img) +".jpg", img_2)
+    cv2.imwrite(str(debug_output_dir() / ("big_" + str(save_img) + ".jpg")), img_1)
+    cv2.imwrite(str(debug_output_dir() / ("small_" + str(save_img) + ".jpg")), img_2)
 
 
 def sift_ahash(img_1,img_2):
@@ -333,10 +337,16 @@ def sift_ahash(img_1,img_2):
     IMG_1=img_1
     IMG_2=img_2
 
+    if IMG_1.des is None or IMG_2.des is None:
+        return False, False
+
     match=bf.match(IMG_2.des,IMG_1.des)
     match = sorted(match, key=lambda x: x.distance)
 
     catch_match=5
+    if len(match) < catch_match:
+        return False, False
+
     IMG_1_Point = np.zeros((5,2))
     IMG_2_Point = np.zeros((5,2))
 
@@ -344,6 +354,8 @@ def sift_ahash(img_1,img_2):
     match_index=0
     match_list=[]
     while(point_index<catch_match):
+        if match_index >= len(match):
+            return False, False
         x, y = IMG_1.kp[match[match_index].trainIdx].pt
         a, b = IMG_2.kp[match[match_index].queryIdx].pt
 
@@ -529,9 +541,7 @@ def PRINT_GROUP(buf_list):                      #check
     print("\n")
 
 def transfer_filename( buf_filename):
-    dot_count=buf_filename.find(".")
-    buf_filename=buf_filename[:dot_count+1]+"jpg"
-    return buf_filename
+    return jpg_filename(buf_filename)
 #============================================================================================
 
 
@@ -715,17 +725,17 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         if(self.IsStore>=1):
             self.IsStore=0
             return
+        if not class_list.CF_list:
+            QMessageBox.warning(self, "提示", "目前沒有分組結果可以保存。")
+            return
         print("\nstart store img\n")
         now = datetime.now()
         current_time = now.strftime(" %m %d %Y %H %M %S")
 
-        download_dir=os.path.join(os.path.expanduser("~"), "Downloads", "Classification" + current_time)
+        download_dir=os.path.join(str(downloads_dir()), "Classification" + current_time)
         
         #C:/Users/User/Downloads
-        try :
-            os.mkdir(download_dir)
-        except:
-            print("exist ")
+        os.makedirs(download_dir, exist_ok=True)
 
         
        
@@ -734,7 +744,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         for group in class_list.CF_list:
             buf_dir=os.path.join(download_dir, "Group" + str(G))
             #print("\nreate dir : ",buf_dir," ====>   \n")
-            os.mkdir(buf_dir)
+            os.makedirs(buf_dir, exist_ok=True)
             for buf_img in group.same:
                 store_img=cv2.imread(buf_img.name)
                 #print("store img shape : ",store_img.shape)
@@ -749,16 +759,22 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         Dialog = QtWidgets.QDialog()
         ui = Ui_Dialog()
         ui.setupUi(Dialog)
-        Dialog.show()
-        sys.exit(app.exec_())
+        Dialog.exec_()
     
     def readFile(self):
       
         print("read file  ")
         start=time.time()
-                    #D:/source/vscode/python_project/test_file
-                    #C:/Users/howar/Downloads/differ_size
-        read_directory("D:/test_img")                       #      <===  input   <====================
+        image_files = iter_image_files(default_open_dir())
+        del img[:]
+        for image_path in image_files:
+            try:
+                buf=IMG(str(image_path),image_path.name)
+                buf.img_shape()
+                buf.create_sift()
+                img.append(buf)
+            except Exception as exc:
+                print("skip image:", image_path, exc)
         end=time.time()
 
 
@@ -776,13 +792,18 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         if(self.IsStore>=1):
             self.IsStore=0
             return
-        filepath = QFileDialog.getExistingDirectory(self, "请选择文件夹路径", "D:\\Qt_ui")
+        filepath = QFileDialog.getExistingDirectory(self, "请选择文件夹路径", default_open_dir())
+        if not filepath:
+            return
         print(filepath)
         self.IsStore+=1
     
     
     
     def IMG_match(self):
+        if len(img) == 0:
+            QMessageBox.warning(self, "提示", "還沒有可匹配的圖片，請先讀取圖片。")
+            return
         start=time.time()
 
         img_len=len(img)

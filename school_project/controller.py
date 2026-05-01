@@ -33,6 +33,8 @@ from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabe
 from controller2 import MainWindow_controller2
 
 import class_list
+from app_paths import debug_output_dir, default_open_dir
+from image_utils import iter_image_files
 
 
 
@@ -311,6 +313,8 @@ class IMG:
 
     def img_shape(self):        #check
 
+        if self.img is None:
+            raise ValueError("Image could not be read: " + self.name)
         hight,width=self.img.shape[:2]
         if((width>=1000)&(hight>=1000)):
             self.img=new_resize_img(self.img,2**(-1))
@@ -370,7 +374,7 @@ class BUF_IMG:
         img=self.img
         b_img=self.img
         cv2.circle(b_img,(int(self.y),int(self.x)),20,(0,0,255),-1)
-        cv2.imwrite("D:/source/vscode/python_project/check_img/buf_"+ name +".jpg", b_img)
+        cv2.imwrite(str(debug_output_dir() / ("buf_" + name + ".jpg")), b_img)
         self.img=img
 
 
@@ -397,12 +401,12 @@ def drawKeyPoint(img_2, kp_2, img_1,kp_1, Three,save_img):
                                                     #畫特定kp    特徵點是否要畫
     showIMG("img_out", img_out)
     print("key point match len : ",len(Three))
-    cv2.imwrite("D:/source/vscode/python_project/check_img/out_img_"+str(save_img) +".jpg", img_out)
+    cv2.imwrite(str(debug_output_dir() / ("out_img_" + str(save_img) + ".jpg")), img_out)
 
 def showCutIMG(img_1,img_2,save_img):
     print("save img : ",save_img,"\n")
-    cv2.imwrite("D:/source/vscode/python_project/check_img/big_"+str(save_img)+".jpg", img_1)
-    cv2.imwrite("D:/source/vscode/python_project/check_img/small_"+str(save_img) +".jpg", img_2)
+    cv2.imwrite(str(debug_output_dir() / ("big_" + str(save_img) + ".jpg")), img_1)
+    cv2.imwrite(str(debug_output_dir() / ("small_" + str(save_img) + ".jpg")), img_2)
 
 
 def sift_ahash(img_1,img_2):
@@ -410,10 +414,16 @@ def sift_ahash(img_1,img_2):
     IMG_1=img_1
     IMG_2=img_2
 
+    if IMG_1.des is None or IMG_2.des is None:
+        return False, False
+
     match=bf.match(IMG_2.des,IMG_1.des)
     match = sorted(match, key=lambda x: x.distance)
 
     catch_match=5
+    if len(match) < catch_match:
+        return False, False
+
     IMG_1_Point = np.zeros((5,2))
     IMG_2_Point = np.zeros((5,2))
 
@@ -421,6 +431,8 @@ def sift_ahash(img_1,img_2):
     match_index=0
     match_list=[]
     while(point_index<catch_match):
+        if match_index >= len(match):
+            return False, False
         x, y = IMG_1.kp[match[match_index].trainIdx].pt
         a, b = IMG_2.kp[match[match_index].queryIdx].pt
 
@@ -626,7 +638,7 @@ class Form_controller(QtWidgets.QMainWindow):
     def setup_control(self):
         # TODO
        # self.ui.progressBar.setValue(0)
-        self.ui.pushButton.setText("打开文件夾")
+        self.ui.pushButton.setText("選擇資料夾")
        # self.clicked_counter = 0
         self.ui.pushButton.clicked.connect(self.openFile)
         self.ui.pushButton_2.clicked.connect(self.readFile)
@@ -649,7 +661,9 @@ class Form_controller(QtWidgets.QMainWindow):
     def openFile(self):
        # self.clicked_counter += 1
         #print(f"You clicked {self.clicked_counter} times.")
-       filepath = QFileDialog.getExistingDirectory(self, "请选择文件夹路径", "D:\\Qt_ui")
+       filepath = QFileDialog.getExistingDirectory(self, "请选择文件夹路径", default_open_dir())
+       if not filepath:
+           return
        print(filepath)
        self.ui.listWidget.addItem(filepath)
        
@@ -657,7 +671,11 @@ class Form_controller(QtWidgets.QMainWindow):
     def readFile(self):
         #self.ui.pushButton_3.setEnabled(False)
         #time.sleep(1)
-        filepath = self.ui.listWidget.currentItem().text()
+        current_item = self.ui.listWidget.currentItem()
+        if current_item is None:
+            QMessageBox.warning(self, "提示", "請先選擇圖片資料夾。")
+            return
+        filepath = current_item.text()
         self.thread = Thread()
         self.thread._signal.connect(self.signal_accept)
         
@@ -673,16 +691,24 @@ class Form_controller(QtWidgets.QMainWindow):
 
         directory_name=filepath
         count=0
-        len_img=len(os.listdir(directory_name))
+        image_files = iter_image_files(directory_name)
+        len_img=len(image_files)
+        if len_img == 0:
+            QMessageBox.warning(self, "提示", "這個資料夾沒有可掃描的圖片。")
+            return
         print("len img : ",len_img)
-        for filename in os.listdir(directory_name):
+        del img[:]
+        for image_path in image_files:
             
-            name_string = (directory_name + "/" + filename)
+            name_string = str(image_path)
             print("img path : ",name_string)
-            buf=IMG(name_string,filename)
-            buf.img_shape()
-            buf.create_sift()
-            img.append(buf)
+            try:
+                buf=IMG(name_string,image_path.name)
+                buf.img_shape()
+                buf.create_sift()
+                img.append(buf)
+            except Exception as exc:
+                print("skip image:", name_string, exc)
             buf_index=int(count/len_img*100)
             #print("buf_index : ",buf_index)
             self.thread._signal.emit(buf_index)
@@ -718,6 +744,9 @@ class Form_controller(QtWidgets.QMainWindow):
             
     def IMG_match(self):
         
+        if len(img) == 0:
+            QMessageBox.warning(self, "提示", "還沒有可匹配的圖片，請先開始掃描。")
+            return
         
         self.window = MainWindow_controller2()
         
@@ -731,10 +760,11 @@ class Form_controller(QtWidgets.QMainWindow):
         #self._signal.emit(100)
         self.thread._signal.emit(0)
         scalar=0
+        progress_step=max(1, img_len//4)
         for i in range(img_len):
             buf_index=i/img_len*100
             self.thread._signal.emit(buf_index)    
-            if((i%(img_len//4))==0):
+            if((i%progress_step)==0):
                 percent=scalar*25
                 scalar+=1
                 print("working ",percent," % ......")
@@ -798,7 +828,8 @@ class Form_controller(QtWidgets.QMainWindow):
        # f.close()
         list_classification=sorted(list_classification, key = lambda s: s.img_count)
         class_list.CF_list=list_classification
-        print("global group 0 img 0 filename : ",class_list.CF_list[0].same[0].filename)#第一个0是第0群，same是第0群里面第0个照片，简短路径
+        if class_list.CF_list:
+            print("global group 0 img 0 filename : ",class_list.CF_list[0].same[0].filename)#第一个0是第0群，same是第0群里面第0个照片，简短路径
         #item = QtWidgets.QTableWidgetItem(QIcon(path),filename)
         print("\n\nend")
        
