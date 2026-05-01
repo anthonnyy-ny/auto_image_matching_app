@@ -225,11 +225,37 @@ def vector(tar,tem,point):          #check
 sift = cv2.SIFT_create()
 bf = cv2.BFMatcher(crossCheck=True)
 
+
+def read_cv_image(name):
+    image = cv2.imread(name)
+    if image is not None:
+        return image
+
+    qt_image = QImage(name)
+    if qt_image.isNull() and QtWidgets.QApplication.instance() is not None:
+        icon = QIcon(name)
+        sizes = icon.availableSizes()
+        if sizes:
+            size = max(sizes, key=lambda value: value.width() * value.height())
+            pixmap = icon.pixmap(size)
+            qt_image = pixmap.toImage()
+    if qt_image.isNull():
+        return None
+    qt_image = qt_image.convertToFormat(QImage.Format_RGB888)
+    width = qt_image.width()
+    height = qt_image.height()
+    bytes_per_line = qt_image.bytesPerLine()
+    ptr = qt_image.bits()
+    ptr.setsize(height * bytes_per_line)
+    arr = np.frombuffer(ptr, np.uint8).reshape((height, bytes_per_line // 3, 3))
+    arr = arr[:, :width, :]
+    return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR).copy()
+
 class IMG:
     def __init__(self,name,filename):
         self.name=name
         self.filename=filename
-        self.img=cv2.imread(name)
+        self.img=read_cv_image(name)
         self.gray_img=[]
         self.kp=[]
         self.des=[]
@@ -750,7 +776,10 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             #print("\nreate dir : ",buf_dir," ====>   \n")
             os.makedirs(buf_dir, exist_ok=True)
             for buf_img in group.same:
-                store_img=cv2.imread(buf_img.name)
+                store_img=read_cv_image(buf_img.name)
+                if store_img is None:
+                    print("skip save image:", buf_img.name)
+                    continue
                 #print("store img shape : ",store_img.shape)
                 buf_filename=transfer_filename(buf_img.filename)
                 #print("store img filename : ",buf_filename)

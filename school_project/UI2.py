@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from pathlib import Path
 import class_list
 
 if not hasattr(class_list, "CF_list"):
     class_list.create_global()
+
+ICON_DIR = Path(__file__).resolve().parent / "ui_view" / "png_icons"
 
 
 class Ui_mainWindow(object):
@@ -172,9 +175,11 @@ class Ui_mainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def _icon(self, path):
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        return icon
+        icon_name = path.rsplit("/", 1)[-1].replace(".ico", ".png")
+        png_path = ICON_DIR / icon_name
+        if png_path.exists():
+            return QtGui.QIcon(str(png_path))
+        return QtGui.QIcon(path)
 
     def _side_button(self, parent, name):
         button = QtWidgets.QPushButton(parent)
