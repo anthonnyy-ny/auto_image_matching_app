@@ -3,6 +3,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 import class_list
+from animated_ui import AnimatedBackgroundWidget, GlowButton
 
 if not hasattr(class_list, "CF_list"):
     class_list.create_global()
@@ -18,7 +19,7 @@ class Ui_mainWindow(object):
         mainWindow.setWindowIcon(self._icon(":/background image/pictureresult.ico"))
         mainWindow.setStyleSheet(self._style_sheet())
 
-        self.centralwidget = QtWidgets.QWidget(mainWindow)
+        self.centralwidget = AnimatedBackgroundWidget(mainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.rootLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.rootLayout.setContentsMargins(22, 18, 22, 18)
@@ -172,6 +173,7 @@ class Ui_mainWindow(object):
 
         self.retranslateUi(mainWindow)
         self.tabWidget_2.setCurrentIndex(0)
+        self._start_intro_animation()
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def _icon(self, path):
@@ -182,7 +184,7 @@ class Ui_mainWindow(object):
         return QtGui.QIcon(path)
 
     def _side_button(self, parent, name):
-        button = QtWidgets.QPushButton(parent)
+        button = GlowButton(parent)
         button.setObjectName(name)
         button.setMinimumHeight(36)
         return button
@@ -193,6 +195,33 @@ class Ui_mainWindow(object):
         shadow.setOffset(0, 12)
         shadow.setColor(QtGui.QColor(12, 16, 30, int(255 * opacity)))
         widget.setGraphicsEffect(shadow)
+
+    def _start_intro_animation(self):
+        self._intro_group = QtCore.QParallelAnimationGroup(self.centralwidget)
+        for widget, delay, offset in (
+            (self.headerFrame, 0, -24),
+            (self.contentFrame, 90, 32),
+        ):
+            opacity = QtWidgets.QGraphicsOpacityEffect(widget)
+            widget.setGraphicsEffect(opacity)
+            fade = QtCore.QPropertyAnimation(opacity, b"opacity", self.centralwidget)
+            fade.setDuration(420)
+            fade.setStartValue(0.0)
+            fade.setEndValue(1.0)
+            fade.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+            fade.setLoopCount(1)
+
+            start_pos = widget.pos() + QtCore.QPoint(0, offset)
+            end_pos = widget.pos()
+            widget.move(start_pos)
+            move = QtCore.QPropertyAnimation(widget, b"pos", self.centralwidget)
+            move.setDuration(520 + delay)
+            move.setStartValue(start_pos)
+            move.setEndValue(end_pos)
+            move.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+            self._intro_group.addAnimation(fade)
+            self._intro_group.addAnimation(move)
+        self._intro_group.start()
 
     def _create_actions(self, mainWindow):
         self.action_F1 = QtWidgets.QAction(mainWindow)
@@ -263,12 +292,7 @@ class Ui_mainWindow(object):
     def _style_sheet(self):
         return """
 QWidget#centralwidget {
-    background-color: qlineargradient(
-        spread:pad, x1:0.02, y1:0.02, x2:1, y2:1,
-        stop:0 rgba(31, 34, 57, 255),
-        stop:0.38 rgba(204, 91, 158, 255),
-        stop:1 rgba(248, 244, 250, 255)
-    );
+    background: transparent;
 }
 QFrame#headerFrame, QFrame#contentFrame {
     border-radius: 18px;

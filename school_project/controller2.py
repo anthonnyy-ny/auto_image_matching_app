@@ -740,6 +740,17 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         if group_count == 0:
             self.ui.tableWidget.setVerticalHeaderItem(0, QtWidgets.QTableWidgetItem("No result"))
         self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups", 5000)
+        self.animate_results()
+
+    def animate_results(self):
+        effect = QtWidgets.QGraphicsOpacityEffect(self.ui.tableWidget)
+        self.ui.tableWidget.setGraphicsEffect(effect)
+        self._table_fade = QtCore.QPropertyAnimation(effect, b"opacity", self)
+        self._table_fade.setDuration(520)
+        self._table_fade.setStartValue(0.0)
+        self._table_fade.setEndValue(1.0)
+        self._table_fade.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        self._table_fade.start()
 
     def preview_item(self, item):
         image_path = item.data(Qt.UserRole)

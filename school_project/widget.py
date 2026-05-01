@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from animated_ui import AnimatedBackgroundWidget, GlowButton
 
 
 class Ui_Form(object):
@@ -18,7 +19,7 @@ class Ui_Form(object):
         )
         Form.setWindowIcon(icon)
 
-        self.centralwidget = QtWidgets.QWidget(Form)
+        self.centralwidget = AnimatedBackgroundWidget(Form)
         self.centralwidget.setObjectName("centralwidget")
         if isinstance(Form, QtWidgets.QMainWindow):
             Form.setCentralWidget(self.centralwidget)
@@ -30,12 +31,7 @@ class Ui_Form(object):
 
         style_target.setStyleSheet("""
 QWidget#Form, QWidget#centralwidget {
-    background-color: qlineargradient(
-        spread:pad, x1:0.03, y1:0.05, x2:0.98, y2:0.98,
-        stop:0 rgba(40, 43, 70, 255),
-        stop:0.42 rgba(211, 95, 161, 255),
-        stop:1 rgba(255, 246, 252, 255)
-    );
+    background: transparent;
 }
 QFrame#heroFrame {
     border-radius: 16px;
@@ -206,20 +202,20 @@ QProgressBar::chunk {
         self.comboBox.setMinimumHeight(38)
         self.buttonLayout.addWidget(self.comboBox)
 
-        self.pushButton = QtWidgets.QPushButton(layout_parent)
+        self.pushButton = GlowButton(layout_parent)
         self.pushButton.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.pushButton.setObjectName("pushButton")
         self.buttonLayout.addWidget(self.pushButton)
 
-        self.pushButton_2 = QtWidgets.QPushButton(layout_parent)
+        self.pushButton_2 = GlowButton(layout_parent)
         self.pushButton_2.setObjectName("pushButton_2")
         self.buttonLayout.addWidget(self.pushButton_2)
 
-        self.pushButton_4 = QtWidgets.QPushButton(layout_parent)
+        self.pushButton_4 = GlowButton(layout_parent)
         self.pushButton_4.setObjectName("pushButton_4")
         self.buttonLayout.addWidget(self.pushButton_4)
 
-        self.pushButton_3 = QtWidgets.QPushButton(layout_parent)
+        self.pushButton_3 = GlowButton(layout_parent)
         self.pushButton_3.setEnabled(True)
         self.pushButton_3.setCheckable(False)
         self.pushButton_3.setDefault(False)
