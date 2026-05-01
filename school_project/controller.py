@@ -90,6 +90,90 @@ class Thread(QThread):
     def thread_match_img():
         return 0
     '''  
+
+
+class ScanWorker(QThread):
+    progress = pyqtSignal(int)
+    finished = pyqtSignal(object, float, int)
+    failed = pyqtSignal(str)
+
+    def __init__(self, directory_name):
+        super().__init__()
+        self.directory_name = directory_name
+
+    def run(self):
+        start = time.time()
+        image_files = iter_image_files(self.directory_name)
+        if len(image_files) == 0:
+            self.finished.emit([], 0, 0)
+            return
+
+        loaded_images = []
+        skipped = 0
+        total = len(image_files)
+        for count, image_path in enumerate(image_files, start=1):
+            if self.isInterruptionRequested():
+                break
+            try:
+                item = IMG(str(image_path), image_path.name)
+                item.img_shape()
+                item.create_sift()
+                loaded_images.append(item)
+            except Exception as exc:
+                skipped += 1
+                print("skip image:", image_path, exc)
+            self.progress.emit(int(count / total * 100))
+        self.finished.emit(loaded_images, time.time() - start, skipped)
+
+
+class MatchWorker(QThread):
+    progress = pyqtSignal(int)
+    finished = pyqtSignal(object, float)
+    failed = pyqtSignal(str)
+
+    def __init__(self, images):
+        super().__init__()
+        self.images = list(images)
+
+    def run(self):
+        start = time.time()
+        image_count = len(self.images)
+        if image_count == 0:
+            self.finished.emit([], 0)
+            return
+
+        list_classification = []
+        progress_step = max(1, image_count // 4)
+        for i, image_item in enumerate(self.images):
+            if self.isInterruptionRequested():
+                break
+            self.progress.emit(int(i / image_count * 100))
+            if((i % progress_step) == 0):
+                print("working ", int(i / image_count * 100), " % ......")
+
+            IsClass = False
+            for index in range(len(list_classification)):
+                IsSame, IsBig = sift_ahash(image_item, list_classification[index].same[0])
+                if(IsSame):
+                    IsClass = True
+                    list_classification[index].save_img(image_item, IsBig)
+                    if(IsBig):
+                        pop_list = []
+                        for buf_index in range(index + 1, len(list_classification)):
+                            buf_Same, buf_Big = sift_ahash(list_classification[buf_index].same[0], list_classification[index].same[0])
+                            if(buf_Same & (buf_Big == False)):
+                                list_classification[index].union(list_classification[buf_index])
+                                pop_list.append(buf_index)
+                        for idx in sorted(pop_list, reverse=True):
+                            del list_classification[idx]
+                    break
+
+            if not(IsClass):
+                list_classification.append(classification(image_item))
+
+        self.progress.emit(100)
+        list_classification = sorted(list_classification, key=lambda s: s.img_count)
+        self.finished.emit(list_classification, time.time() - start)
 def new_resize_img(img, new_scale):                 #check
 
     height, width = img.shape[:2]
@@ -677,6 +761,11 @@ class Form_controller(QtWidgets.QMainWindow):
     def cancelReadFile(self):
         start=time.time()
         self.ui.pushButton_2.setEnabled(True)
+        self.ui.pushButton_3.setEnabled(True)
+        if hasattr(self, "scan_worker") and self.scan_worker.isRunning():
+            self.scan_worker.requestInterruption()
+        if hasattr(self, "match_worker") and self.match_worker.isRunning():
+            self.match_worker.requestInterruption()
         
         #self.ui.pushButton_3.setEnabled(False)
         del img[:]
@@ -723,6 +812,24 @@ class Form_controller(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "提示", "請先選擇圖片資料夾。")
             return
         filepath = current_item.text()
+        image_files = iter_image_files(filepath)
+        if len(image_files) == 0:
+            QMessageBox.warning(self, "提示", "這個資料夾沒有可掃描的圖片。")
+            return
+
+        del img[:]
+        self.ui.progressBar.setValue(0)
+        self.ui.pushButton_2.setEnabled(False)
+        self.ui.pushButton_3.setEnabled(False)
+        print("read file  ")
+        print("len img : ", len(image_files))
+
+        self.scan_worker = ScanWorker(filepath)
+        self.scan_worker.progress.connect(self.signal_accept)
+        self.scan_worker.finished.connect(self.scan_finished)
+        self.scan_worker.failed.connect(lambda msg: QMessageBox.warning(self, "提示", msg))
+        self.scan_worker.start()
+        return
         self.thread = Thread()
         self.thread._signal.connect(self.signal_accept)
         
@@ -785,16 +892,52 @@ class Form_controller(QtWidgets.QMainWindow):
         
     def signal_accept(self, msg):
         self.ui.progressBar.setValue(int(msg))
-        if self.ui.progressBar.value() == 99:
-            self.ui.progressBar.setValue(0)
+        if self.ui.progressBar.value() >= 100:
             self.ui.pushButton_2.setEnabled(True)
+
+    def scan_finished(self, loaded_images, total_input_time, skipped):
+        del img[:]
+        img.extend(loaded_images)
+        self.ui.progressBar.setValue(100)
+        self.ui.pushButton_2.setEnabled(True)
+        self.ui.pushButton_3.setEnabled(True)
+        print("total input time : ", total_input_time)
+        print("loaded images : ", len(img), " skipped : ", skipped)
+        if len(img) == 0:
+            QMessageBox.warning(self, "提示", "沒有成功讀取任何圖片。")
+        elif skipped > 0:
+            QMessageBox.information(self, "掃描完成", "已讀取 " + str(len(img)) + " 張圖片，略過 " + str(skipped) + " 張。")
+
+    def match_finished(self, list_classification, classification_time):
+        class_list.CF_list = list_classification
+        del img[:]
+        self.ui.progressBar.setValue(100)
+        self.ui.pushButton_2.setEnabled(True)
+        self.ui.pushButton_3.setEnabled(True)
+        print("classification input time : ", classification_time)
+        print("\n\nmatch result\n\n")
+        for group_index, tem_class in enumerate(list_classification):
+            print(["Group" + str(group_index) + " : "] + [buf_img.filename for buf_img in tem_class.same])
+        if class_list.CF_list:
+            print("global group 0 img 0 filename : ", class_list.CF_list[0].same[0].filename)
+        self.window = MainWindow_controller2()
+        self.window.show()
             
     def IMG_match(self):
         
         if len(img) == 0:
             QMessageBox.warning(self, "提示", "還沒有可匹配的圖片，請先開始掃描。")
             return
-        
+        self.ui.progressBar.setValue(0)
+        self.ui.pushButton_2.setEnabled(False)
+        self.ui.pushButton_3.setEnabled(False)
+        self.match_worker = MatchWorker(list(img))
+        self.match_worker.progress.connect(self.signal_accept)
+        self.match_worker.finished.connect(self.match_finished)
+        self.match_worker.failed.connect(lambda msg: QMessageBox.warning(self, "提示", msg))
+        self.match_worker.start()
+        return
+
         start=time.time()
         
 

@@ -610,6 +610,9 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.pushButton_11.clicked.connect(self.hideHorizontallHeader)
        self.ui.pushButton_12.clicked.connect(self.showHorizontallHeader)
 
+       self.populate_results()
+       return
+
       # self.ui.statusBar.addPermanentWidget(self.ui.lineEdit)
        print("\n\nshow block\n")
        CF_len=len(class_list.CF_list)
@@ -647,6 +650,37 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
 #       self.ui.tableWidget.hideRow(6)
 #       self.ui.tableWidget.hideRow(7)
 #       self.ui.tableWidget.hideRow(8)
+
+    def populate_results(self):
+        groups = class_list.CF_list
+        group_count = len(groups)
+        max_group_size = max((len(group.same) for group in groups), default=1)
+        row_count = max(1, group_count)
+        column_count = max(1, max_group_size)
+
+        self.ui.tableWidget.clear()
+        self.ui.tableWidget.setRowCount(row_count)
+        self.ui.tableWidget.setColumnCount(column_count)
+        self.ui.tableWidget.setIconSize(QSize(150,150))
+
+        for column in range(column_count):
+            self.ui.tableWidget.setHorizontalHeaderItem(column, QtWidgets.QTableWidgetItem(str(column + 1)))
+            self.ui.tableWidget.setColumnWidth(column, 165)
+
+        group_number_width = max(2, len(str(group_count)))
+        for row, group in enumerate(groups):
+            group_name = "Group" + str(row + 1).zfill(group_number_width)
+            self.ui.tableWidget.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(group_name + " (" + str(group.img_count) + ")"))
+            self.ui.tableWidget.setRowHeight(row, 165)
+            for column, buf_img in enumerate(group.same):
+                item = QtWidgets.QTableWidgetItem(QIcon(buf_img.name), buf_img.filename)
+                item.setToolTip(buf_img.name)
+                self.ui.tableWidget.setItem(row, column, item)
+
+        if group_count == 0:
+            self.ui.tableWidget.setVerticalHeaderItem(0, QtWidgets.QTableWidgetItem("No result"))
+        self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups", 5000)
+
     def addrow(self):
         if(self.IsStore==1):
             self.IsStore=0
