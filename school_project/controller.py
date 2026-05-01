@@ -24,7 +24,7 @@ import math
 from math import *
 #from datetime import datetime
 from PyQt5.QtCore import Qt, QMimeData, QDate, QDateTime, QTime, QStringListModel, QSize,QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QPainter, QBrush, QStandardItemModel, QStandardItem, QColor, QFont
+from PyQt5.QtGui import QIcon, QPainter, QBrush, QPixmap, QStandardItemModel, QStandardItem, QColor, QFont
 from PyQt5.QtPrintSupport import QPageSetupDialog, QPrinter
 from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QGridLayout, \
     QCalendarWidget, QVBoxLayout, QDateTimeEdit, QAction, QMainWindow, QTextEdit, QStatusBar, QFileDialog, QDialog, \
@@ -115,7 +115,7 @@ def a_hash(img):                                    #check
     # 求灰階值總和
     for i in range(8):
         for j in range(8):
-            sum_gray += gray[i][j]
+            sum_gray += int(gray[i][j])
 
     # 8*8灰階圖 平均
     average_gray = sum_gray/64
@@ -142,7 +142,7 @@ def a_hash(img):                                    #check
     # 求灰階值總和
     for i in range(8):
         for j in range(8):
-            sum_gray += gray[i][j]
+            sum_gray += int(gray[i][j])
 
     # 8*8灰階圖 平均
     average_gray = sum_gray/64
@@ -644,6 +644,8 @@ class Form_controller(QtWidgets.QMainWindow):
         self.ui.pushButton_2.clicked.connect(self.readFile)
         self.ui.pushButton_3.clicked.connect(self.IMG_match)
         self.ui.pushButton_4.clicked.connect(self.cancelReadFile)
+        if hasattr(self.ui, "previewListWidget"):
+            self.ui.listWidget.currentTextChanged.connect(self.updatePreview)
        # self.ui.listWidget.clicked.connect(self.ui.listWidget.currentItem().text())
 
     def cancelReadFile(self):
@@ -666,6 +668,25 @@ class Form_controller(QtWidgets.QMainWindow):
            return
        print(filepath)
        self.ui.listWidget.addItem(filepath)
+       self.ui.listWidget.setCurrentRow(self.ui.listWidget.count() - 1)
+       self.updatePreview(filepath)
+       
+    def updatePreview(self, directory_name):
+        if not hasattr(self.ui, "previewListWidget") or not directory_name:
+            return
+        self.ui.previewListWidget.clear()
+        for image_path in iter_image_files(directory_name)[:12]:
+            pixmap = QPixmap(str(image_path))
+            if pixmap.isNull():
+                continue
+            icon = QIcon(pixmap.scaled(92, 92, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            item = QtWidgets.QListWidgetItem(icon, image_path.name)
+            item.setToolTip(str(image_path))
+            self.ui.previewListWidget.addItem(item)
+        if self.ui.previewListWidget.count() == 0:
+            self.ui.previewListWidget.addItem("沒有可預覽的圖片")
+        else:
+            self.ui.previewListWidget.addItem("...")
        
        
     def readFile(self):
@@ -747,8 +768,6 @@ class Form_controller(QtWidgets.QMainWindow):
         if len(img) == 0:
             QMessageBox.warning(self, "提示", "還沒有可匹配的圖片，請先開始掃描。")
             return
-        
-        self.window = MainWindow_controller2()
         
         start=time.time()
         
@@ -834,7 +853,7 @@ class Form_controller(QtWidgets.QMainWindow):
         print("\n\nend")
        
         
-        self.window.setup_control()
+        self.window = MainWindow_controller2()
         self.window.show()
         self.ui.pushButton_2.setEnabled(True)
         

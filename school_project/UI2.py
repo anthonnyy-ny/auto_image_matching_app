@@ -1,414 +1,225 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\User\Desktop\school_project\ui_view\UI2.ui'
-#
-# Created by: PyQt5 UI code generator 5.9.2
-#
-# WARNING! All changes made in this file will be lost!
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 import class_list
 
-class_list.create_global()
+if not hasattr(class_list, "CF_list"):
+    class_list.create_global()
 
-
-
-group_len=len(class_list.CF_list)
-print("group_len : ",group_len)
 
 class Ui_mainWindow(object):
     def setupUi(self, mainWindow):
         mainWindow.setObjectName("mainWindow")
-        mainWindow.setWindowModality(QtCore.Qt.WindowModal)
-        mainWindow.resize(454, 370)
-        mainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        mainWindow.setTabletTracking(False)
-        mainWindow.setFocusPolicy(QtCore.Qt.NoFocus)
-        mainWindow.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
-        mainWindow.setAcceptDrops(False)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/background image/pictureresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        mainWindow.setWindowIcon(icon)
-        mainWindow.setToolTip("")
-        mainWindow.setStatusTip("")
-        mainWindow.setLayoutDirection(QtCore.Qt.LeftToRight)
-        mainWindow.setAutoFillBackground(False)
-        mainWindow.setStyleSheet("")
-        mainWindow.setIconSize(QtCore.QSize(24, 22))
-        mainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
-        mainWindow.setDocumentMode(False)
-        mainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
+        mainWindow.resize(1180, 760)
+        mainWindow.setMinimumSize(QtCore.QSize(920, 620))
+        mainWindow.setWindowIcon(self._icon(":/background image/pictureresult.ico"))
+        mainWindow.setStyleSheet(self._style_sheet())
+
         self.centralwidget = QtWidgets.QWidget(mainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.rootLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.rootLayout.setContentsMargins(22, 18, 22, 18)
+        self.rootLayout.setSpacing(14)
+
+        self.headerFrame = QtWidgets.QFrame(self.centralwidget)
+        self.headerFrame.setObjectName("headerFrame")
+        self.headerLayout = QtWidgets.QHBoxLayout(self.headerFrame)
+        self.headerLayout.setContentsMargins(22, 16, 22, 16)
+        self.headerLayout.setSpacing(16)
+
+        self.titleBlock = QtWidgets.QVBoxLayout()
+        self.titleBlock.setSpacing(3)
+        self.titleLabel = QtWidgets.QLabel(self.headerFrame)
+        self.titleLabel.setObjectName("titleLabel")
+        self.subtitleLabel = QtWidgets.QLabel(self.headerFrame)
+        self.subtitleLabel.setObjectName("subtitleLabel")
+        self.titleBlock.addWidget(self.titleLabel)
+        self.titleBlock.addWidget(self.subtitleLabel)
+        self.headerLayout.addLayout(self.titleBlock, 1)
+
+        self.lineEdit = QtWidgets.QLineEdit(self.headerFrame)
         self.lineEdit.setObjectName("lineEdit")
-        self.verticalLayout_2.addWidget(self.lineEdit)
-        self.tabWidget_2 = QtWidgets.QTabWidget(self.centralwidget)
-        self.tabWidget_2.setStyleSheet("")
+        self.lineEdit.setMinimumWidth(260)
+        self.lineEdit.setClearButtonEnabled(True)
+        self.headerLayout.addWidget(self.lineEdit)
+        self.rootLayout.addWidget(self.headerFrame)
+
+        self.contentFrame = QtWidgets.QFrame(self.centralwidget)
+        self.contentFrame.setObjectName("contentFrame")
+        self.contentLayout = QtWidgets.QVBoxLayout(self.contentFrame)
+        self.contentLayout.setContentsMargins(16, 16, 16, 16)
+        self.contentLayout.setSpacing(12)
+
+        self.tabWidget_2 = QtWidgets.QTabWidget(self.contentFrame)
         self.tabWidget_2.setObjectName("tabWidget_2")
         self.tab_3 = QtWidgets.QWidget()
         self.tab_3.setObjectName("tab_3")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.tab_3)
-        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.tableLayout = QtWidgets.QVBoxLayout(self.tab_3)
+        self.tableLayout.setContentsMargins(0, 0, 0, 0)
+        self.tableLayout.setSpacing(0)
+
         self.tableWidget = QtWidgets.QTableWidget(self.tab_3)
-        self.tableWidget.setEnabled(True)
-        self.tableWidget.setStyleSheet("")
-        self.tableWidget.setProperty("showDropIndicator", True)
-        self.tableWidget.setDragEnabled(True)
-        self.tableWidget.setShowGrid(True)
         self.tableWidget.setObjectName("tableWidget")
         self.tableWidget.setColumnCount(15)
         self.tableWidget.setRowCount(50)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(3, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(4, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(5, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(6, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(7, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(8, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(9, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(10, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(11, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(12, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(13, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(14, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(15, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(16, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(17, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(18, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(19, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(20, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(21, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(22, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(23, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(24, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(25, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(26, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(27, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(28, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(29, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(30, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(31, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(32, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(33, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(34, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(35, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(36, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(37, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(38, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(39, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(40, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(41, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(42, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(43, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(44, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(45, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(46, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(47, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(48, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(49, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(5, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(6, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(7, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(8, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(9, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(10, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(11, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(12, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(13, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(14, item)
+        self.tableWidget.setIconSize(QtCore.QSize(150, 150))
+        self.tableWidget.setAlternatingRowColors(False)
+        self.tableWidget.setShowGrid(False)
+        self.tableWidget.setDragEnabled(True)
+        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableWidget.horizontalHeader().setVisible(True)
-        self.tableWidget.horizontalHeader().setHighlightSections(True)
         self.tableWidget.verticalHeader().setVisible(True)
-        self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
-        self.horizontalLayout.addWidget(self.tableWidget)
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/background image/text-pageresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.tabWidget_2.addTab(self.tab_3, icon1, "")
+        self.tableWidget.horizontalHeader().setDefaultSectionSize(160)
+        self.tableWidget.verticalHeader().setDefaultSectionSize(160)
+        self.tableWidget.horizontalHeader().setMinimumSectionSize(120)
+        self.tableWidget.verticalHeader().setMinimumSectionSize(120)
+        self.tableWidget.horizontalHeader().setStretchLastSection(False)
+        for row in range(50):
+            self.tableWidget.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(str(row + 1)))
+        for col in range(15):
+            self.tableWidget.setHorizontalHeaderItem(col, QtWidgets.QTableWidgetItem(str(col + 1)))
+        self.tableLayout.addWidget(self.tableWidget)
+
+        self.tabWidget_2.addTab(self.tab_3, self._icon(":/background image/text-pageresult.ico"), "")
         self.tab_4 = QtWidgets.QWidget()
-        self.tab_4.setObjectName("tab_4")
-        self.widget = QtWidgets.QWidget(self.tab_4)
-        self.widget.setGeometry(QtCore.QRect(160, 170, 451, 271))
-        self.widget.setObjectName("widget")
-        self.tabWidget_2.addTab(self.tab_4, icon1, "")
+        self.tabWidget_2.addTab(self.tab_4, self._icon(":/background image/pictureresult.ico"), "")
         self.tab = QtWidgets.QWidget()
-        self.tab.setObjectName("tab")
-        self.tabWidget_2.addTab(self.tab, icon1, "")
+        self.tabWidget_2.addTab(self.tab, self._icon(":/background image/folderresult.ico"), "")
         self.tab_2 = QtWidgets.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.tabWidget_2.addTab(self.tab_2, icon1, "")
-        self.tab_5 = QtWidgets.QWidget()
-        self.tab_5.setObjectName("tab_5")
-        self.tabWidget_2.addTab(self.tab_5, icon1, "")
-        self.tab_6 = QtWidgets.QWidget()
-        self.tab_6.setObjectName("tab_6")
-        self.tabWidget_2.addTab(self.tab_6, icon1, "")
-        self.verticalLayout_2.addWidget(self.tabWidget_2)
+        self.tabWidget_2.addTab(self.tab_2, self._icon(":/background image/searchresult.ico"), "")
+        self.contentLayout.addWidget(self.tabWidget_2)
+        self.rootLayout.addWidget(self.contentFrame, 1)
         mainWindow.setCentralWidget(self.centralwidget)
+
         self.menubar = QtWidgets.QMenuBar(mainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 454, 18))
         self.menubar.setObjectName("menubar")
-        self.menu = QtWidgets.QMenu(self.menubar)
-        self.menu.setObjectName("menu")
-        self.menu_6 = QtWidgets.QMenu(self.menu)
-        self.menu_6.setObjectName("menu_6")
-        self.menu_2 = QtWidgets.QMenu(self.menubar)
-        self.menu_2.setObjectName("menu_2")
-        self.menu_3 = QtWidgets.QMenu(self.menubar)
-        self.menu_3.setObjectName("menu_3")
-        self.menu_4 = QtWidgets.QMenu(self.menubar)
-        self.menu_4.setObjectName("menu_4")
-        self.menu_5 = QtWidgets.QMenu(self.menubar)
-        self.menu_5.setObjectName("menu_5")
-        self.menu_C = QtWidgets.QMenu(self.menubar)
-        self.menu_C.setObjectName("menu_C")
-        self.menu_9 = QtWidgets.QMenu(self.menu_C)
-        self.menu_9.setObjectName("menu_9")
-        self.menu_7 = QtWidgets.QMenu(self.menubar)
-        self.menu_7.setObjectName("menu_7")
-        self.menu_8 = QtWidgets.QMenu(self.menubar)
-        self.menu_8.setObjectName("menu_8")
         mainWindow.setMenuBar(self.menubar)
+        self.menu = QtWidgets.QMenu(self.menubar)
+        self.menu_2 = QtWidgets.QMenu(self.menubar)
+        self.menu_3 = QtWidgets.QMenu(self.menubar)
+        self.menu_4 = QtWidgets.QMenu(self.menubar)
+        self.menu_5 = QtWidgets.QMenu(self.menubar)
+        self.menu_C = QtWidgets.QMenu(self.menubar)
+        self.menu_7 = QtWidgets.QMenu(self.menubar)
+        self.menu_8 = QtWidgets.QMenu(self.menubar)
+        self.menu_9 = QtWidgets.QMenu(self.menu_C)
+        self.menu_6 = QtWidgets.QMenu(self.menu)
+
         self.statusBar = QtWidgets.QStatusBar(mainWindow)
         self.statusBar.setObjectName("statusBar")
         mainWindow.setStatusBar(self.statusBar)
+
         self.toolBar = QtWidgets.QToolBar(mainWindow)
-        self.toolBar.setEnabled(True)
-        self.toolBar.setMaximumSize(QtCore.QSize(16777214, 16777215))
-        self.toolBar.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        self.toolBar.setAcceptDrops(False)
-        self.toolBar.setStatusTip("")
-        self.toolBar.setWhatsThis("")
-        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.toolBar.setFloatable(True)
         self.toolBar.setObjectName("toolBar")
+        self.toolBar.setIconSize(QtCore.QSize(24, 24))
+        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.toolBar.setMovable(False)
         mainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
+
         self.dockWidget = QtWidgets.QDockWidget(mainWindow)
         self.dockWidget.setObjectName("dockWidget")
+        self.dockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetMovable | QtWidgets.QDockWidget.DockWidgetFloatable)
         self.dockWidgetContents = QtWidgets.QWidget()
         self.dockWidgetContents.setObjectName("dockWidgetContents")
-        self.formLayout = QtWidgets.QFormLayout(self.dockWidgetContents)
-        self.formLayout.setObjectName("formLayout")
-        self.pushButton_5 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_5.setObjectName("pushButton_5")
-        self.formLayout.setWidget(9, QtWidgets.QFormLayout.LabelRole, self.pushButton_5)
-        self.pushButton_6 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_6.setObjectName("pushButton_6")
-        self.formLayout.setWidget(10, QtWidgets.QFormLayout.LabelRole, self.pushButton_6)
-        self.pushButton_7 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_7.setObjectName("pushButton_7")
-        self.formLayout.setWidget(13, QtWidgets.QFormLayout.LabelRole, self.pushButton_7)
-        self.pushButton_8 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_8.setObjectName("pushButton_8")
-        self.formLayout.setWidget(14, QtWidgets.QFormLayout.LabelRole, self.pushButton_8)
-        self.pushButton_9 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_9.setObjectName("pushButton_9")
-        self.formLayout.setWidget(15, QtWidgets.QFormLayout.LabelRole, self.pushButton_9)
-        self.pushButton_10 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_10.setObjectName("pushButton_10")
-        self.formLayout.setWidget(16, QtWidgets.QFormLayout.LabelRole, self.pushButton_10)
-        self.pushButton_11 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_11.setObjectName("pushButton_11")
-        self.formLayout.setWidget(17, QtWidgets.QFormLayout.LabelRole, self.pushButton_11)
-        self.pushButton_12 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_12.setObjectName("pushButton_12")
-        self.formLayout.setWidget(18, QtWidgets.QFormLayout.LabelRole, self.pushButton_12)
-        self.pushButton_2 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.formLayout.setWidget(7, QtWidgets.QFormLayout.LabelRole, self.pushButton_2)
-        self.pushButton = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton.setObjectName("pushButton")
-        self.formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.pushButton)
-        self.pushButton_4 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_4.setObjectName("pushButton_4")
-        self.formLayout.setWidget(12, QtWidgets.QFormLayout.LabelRole, self.pushButton_4)
-        self.pushButton_3 = QtWidgets.QPushButton(self.dockWidgetContents)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.formLayout.setWidget(11, QtWidgets.QFormLayout.LabelRole, self.pushButton_3)
+        self.sideLayout = QtWidgets.QVBoxLayout(self.dockWidgetContents)
+        self.sideLayout.setContentsMargins(14, 14, 14, 14)
+        self.sideLayout.setSpacing(10)
+        self.sideTitle = QtWidgets.QLabel(self.dockWidgetContents)
+        self.sideTitle.setObjectName("sideTitle")
+        self.sideLayout.addWidget(self.sideTitle)
+
+        self.pushButton = self._side_button(self.dockWidgetContents, "pushButton")
+        self.pushButton_2 = self._side_button(self.dockWidgetContents, "pushButton_2")
+        self.pushButton_3 = self._side_button(self.dockWidgetContents, "pushButton_3")
+        self.pushButton_4 = self._side_button(self.dockWidgetContents, "pushButton_4")
+        self.sideLayout.addWidget(self.pushButton)
+        self.sideLayout.addWidget(self.pushButton_2)
+        self.sideLayout.addWidget(self.pushButton_3)
+        self.sideLayout.addWidget(self.pushButton_4)
+        self.sideLayout.addSpacing(8)
+
+        self.pushButton_5 = self._side_button(self.dockWidgetContents, "pushButton_5")
+        self.pushButton_6 = self._side_button(self.dockWidgetContents, "pushButton_6")
+        self.pushButton_7 = self._side_button(self.dockWidgetContents, "pushButton_7")
+        self.pushButton_8 = self._side_button(self.dockWidgetContents, "pushButton_8")
+        self.sideLayout.addWidget(self.pushButton_5)
+        self.sideLayout.addWidget(self.pushButton_6)
+        self.sideLayout.addWidget(self.pushButton_7)
+        self.sideLayout.addWidget(self.pushButton_8)
+        self.sideLayout.addSpacing(8)
+
+        self.pushButton_9 = self._side_button(self.dockWidgetContents, "pushButton_9")
+        self.pushButton_10 = self._side_button(self.dockWidgetContents, "pushButton_10")
+        self.pushButton_11 = self._side_button(self.dockWidgetContents, "pushButton_11")
+        self.pushButton_12 = self._side_button(self.dockWidgetContents, "pushButton_12")
+        self.sideLayout.addWidget(self.pushButton_9)
+        self.sideLayout.addWidget(self.pushButton_10)
+        self.sideLayout.addWidget(self.pushButton_11)
+        self.sideLayout.addWidget(self.pushButton_12)
+        self.sideLayout.addStretch(1)
         self.dockWidget.setWidget(self.dockWidgetContents)
-        mainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget)
-        self.dockWidget_2 = QtWidgets.QDockWidget(mainWindow)
-        self.dockWidget_2.setObjectName("dockWidget_2")
-        self.dockWidgetContents_2 = QtWidgets.QWidget()
-        self.dockWidgetContents_2.setObjectName("dockWidgetContents_2")
-        self.dockWidget_2.setWidget(self.dockWidgetContents_2)
-        mainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_2)
+        mainWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dockWidget)
+
+        self._create_actions(mainWindow)
+        self._wire_menus()
+        self._add_shadow(self.headerFrame, 28, 0.24)
+        self._add_shadow(self.contentFrame, 34, 0.20)
+
+        self.retranslateUi(mainWindow)
+        self.tabWidget_2.setCurrentIndex(0)
+        QtCore.QMetaObject.connectSlotsByName(mainWindow)
+
+    def _icon(self, path):
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return icon
+
+    def _side_button(self, parent, name):
+        button = QtWidgets.QPushButton(parent)
+        button.setObjectName(name)
+        button.setMinimumHeight(36)
+        return button
+
+    def _add_shadow(self, widget, blur_radius, opacity):
+        shadow = QtWidgets.QGraphicsDropShadowEffect(widget)
+        shadow.setBlurRadius(blur_radius)
+        shadow.setOffset(0, 12)
+        shadow.setColor(QtGui.QColor(12, 16, 30, int(255 * opacity)))
+        widget.setGraphicsEffect(shadow)
+
+    def _create_actions(self, mainWindow):
         self.action_F1 = QtWidgets.QAction(mainWindow)
-        self.action_F1.setObjectName("action_F1")
         self.action_about = QtWidgets.QAction(mainWindow)
-        self.action_about.setObjectName("action_about")
-        self.action_4 = QtWidgets.QAction(mainWindow)
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/background image/exitresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_4.setIcon(icon2)
-        self.action_4.setObjectName("action_4")
-        self.actionundo_CTRL_Z = QtWidgets.QAction(mainWindow)
-        icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/background image/pictureresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        icon3.addPixmap(QtGui.QPixmap(":/background image/pictureresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.On)
-        self.actionundo_CTRL_Z.setIcon(icon3)
-        self.actionundo_CTRL_Z.setObjectName("actionundo_CTRL_Z")
-        self.actionRedo_Ctrl_Y = QtWidgets.QAction(mainWindow)
-        icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/background image/redoresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionRedo_Ctrl_Y.setIcon(icon4)
-        self.actionRedo_Ctrl_Y.setObjectName("actionRedo_Ctrl_Y")
-        self.actionCut = QtWidgets.QAction(mainWindow)
-        icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(":/background image/cutresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionCut.setIcon(icon5)
-        self.actionCut.setObjectName("actionCut")
-        self.actionCopy = QtWidgets.QAction(mainWindow)
-        icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(":/background image/copyresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionCopy.setIcon(icon6)
-        self.actionCopy.setObjectName("actionCopy")
-        self.actionPaste = QtWidgets.QAction(mainWindow)
-        icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(":/background image/pasteresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionPaste.setIcon(icon7)
-        self.actionPaste.setObjectName("actionPaste")
+        self.action_4 = QtWidgets.QAction(self._icon(":/background image/exitresult.ico"), "", mainWindow)
+        self.actionundo_CTRL_Z = QtWidgets.QAction(self._icon(":/background image/undoresult.ico"), "", mainWindow)
+        self.actionRedo_Ctrl_Y = QtWidgets.QAction(self._icon(":/background image/redoresult.ico"), "", mainWindow)
+        self.actionCut = QtWidgets.QAction(self._icon(":/background image/cutresult.ico"), "", mainWindow)
+        self.actionCopy = QtWidgets.QAction(self._icon(":/background image/copyresult.ico"), "", mainWindow)
+        self.actionPaste = QtWidgets.QAction(self._icon(":/background image/pasteresult.ico"), "", mainWindow)
         self.actionSelect_All_Ctrl_A = QtWidgets.QAction(mainWindow)
-        self.actionSelect_All_Ctrl_A.setObjectName("actionSelect_All_Ctrl_A")
-        self.action = QtWidgets.QAction(mainWindow)
-        icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(":/background image/minimizeresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action.setIcon(icon8)
-        self.action.setObjectName("action")
+        self.action = QtWidgets.QAction(self._icon(":/background image/minimizeresult.ico"), "", mainWindow)
         self.action_3 = QtWidgets.QAction(mainWindow)
-        self.action_3.setObjectName("action_3")
         self.action_7 = QtWidgets.QAction(mainWindow)
-        self.action_7.setObjectName("action_7")
-        self.action_8 = QtWidgets.QAction(mainWindow)
-        icon9 = QtGui.QIcon()
-        icon9.addPixmap(QtGui.QPixmap(":/background image/gearresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_8.setIcon(icon9)
-        self.action_8.setObjectName("action_8")
-        self.action_10 = QtWidgets.QAction(mainWindow)
-        self.action_10.setCheckable(False)
-        icon10 = QtGui.QIcon()
-        icon10.addPixmap(QtGui.QPixmap(":/background image/folderresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_10.setIcon(icon10)
-        self.action_10.setIconVisibleInMenu(True)
-        self.action_10.setObjectName("action_10")
-        self.action_11 = QtWidgets.QAction(mainWindow)
-        icon11 = QtGui.QIcon()
-        icon11.addPixmap(QtGui.QPixmap(":/background image/disketteresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_11.setIcon(icon11)
-        self.action_11.setObjectName("action_11")
+        self.action_8 = QtWidgets.QAction(self._icon(":/background image/gearresult.ico"), "", mainWindow)
+        self.action_10 = QtWidgets.QAction(self._icon(":/background image/folderresult.ico"), "", mainWindow)
+        self.action_11 = QtWidgets.QAction(self._icon(":/background image/disketteresult.ico"), "", mainWindow)
         self.action_12 = QtWidgets.QAction(mainWindow)
-        self.action_12.setObjectName("action_12")
         self.action_13 = QtWidgets.QAction(mainWindow)
-        self.action_13.setObjectName("action_13")
         self.action_19 = QtWidgets.QAction(mainWindow)
-        self.action_19.setObjectName("action_19")
         self.action_2 = QtWidgets.QAction(mainWindow)
-        self.action_2.setObjectName("action_2")
-        self.action_5 = QtWidgets.QAction(mainWindow)
-        icon12 = QtGui.QIcon()
-        icon12.addPixmap(QtGui.QPixmap(":/background image/add-fileresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_5.setIcon(icon12)
-        self.action_5.setShortcutContext(QtCore.Qt.WindowShortcut)
-        self.action_5.setObjectName("action_5")
-        self.action_6 = QtWidgets.QAction(mainWindow)
-        icon13 = QtGui.QIcon()
-        icon13.addPixmap(QtGui.QPixmap(":/background image/playresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_6.setIcon(icon13)
-        self.action_6.setObjectName("action_6")
-        self.action_9 = QtWidgets.QAction(mainWindow)
-        icon14 = QtGui.QIcon()
-        icon14.addPixmap(QtGui.QPixmap(":/background image/searchresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_9.setIcon(icon14)
-        self.action_9.setObjectName("action_9")
+        self.action_5 = QtWidgets.QAction(self._icon(":/background image/add-fileresult.ico"), "", mainWindow)
+        self.action_6 = QtWidgets.QAction(self._icon(":/background image/playresult.ico"), "", mainWindow)
+        self.action_9 = QtWidgets.QAction(self._icon(":/background image/searchresult.ico"), "", mainWindow)
         self.action_14 = QtWidgets.QAction(mainWindow)
-        self.action_14.setObjectName("action_14")
-        self.action_15 = QtWidgets.QAction(mainWindow)
-        icon15 = QtGui.QIcon()
-        icon15.addPixmap(QtGui.QPixmap(":/background image/full-screenresult.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.action_15.setIcon(icon15)
-        self.action_15.setObjectName("action_15")
+        self.action_15 = QtWidgets.QAction(self._icon(":/background image/full-screenresult.ico"), "", mainWindow)
         self.action_17 = QtWidgets.QAction(mainWindow)
         self.action_17.setCheckable(True)
-        self.action_17.setObjectName("action_17")
-        self.menu_6.addSeparator()
-        self.menu_6.addAction(self.action_2)
+
+    def _wire_menus(self):
         self.menu.addAction(self.action_5)
         self.menu.addAction(self.action_10)
-        self.menu.addAction(self.menu_6.menuAction())
         self.menu.addSeparator()
         self.menu.addAction(self.action_11)
         self.menu.addAction(self.action_12)
@@ -421,7 +232,6 @@ class Ui_mainWindow(object):
         self.menu_2.addAction(self.action_7)
         self.menu_2.addSeparator()
         self.menu_2.addAction(self.action_3)
-        self.menu_2.addSeparator()
         self.menu_2.addAction(self.action_about)
         self.menu_3.addAction(self.actionundo_CTRL_Z)
         self.menu_3.addAction(self.actionRedo_Ctrl_Y)
@@ -430,334 +240,187 @@ class Ui_mainWindow(object):
         self.menu_3.addAction(self.actionCopy)
         self.menu_3.addAction(self.actionPaste)
         self.menu_3.addAction(self.actionSelect_All_Ctrl_A)
-        self.menu_3.addSeparator()
         self.menu_4.addAction(self.action_8)
         self.menu_5.addAction(self.action)
-        self.menu_5.addSeparator()
         self.menu_9.addAction(self.action_17)
         self.menu_C.addAction(self.action_15)
         self.menu_C.addAction(self.menu_9.menuAction())
         self.menu_7.addAction(self.action_6)
         self.menu_8.addAction(self.action_9)
         self.menu_8.addAction(self.action_14)
-        self.menubar.addAction(self.menu.menuAction())
-        self.menubar.addAction(self.menu_3.menuAction())
-        self.menubar.addAction(self.menu_7.menuAction())
-        self.menubar.addAction(self.menu_8.menuAction())
-        self.menubar.addAction(self.menu_C.menuAction())
-        self.menubar.addAction(self.menu_4.menuAction())
-        self.menubar.addAction(self.menu_5.menuAction())
-        self.menubar.addAction(self.menu_2.menuAction())
-        self.toolBar.addAction(self.action_5)
-        self.toolBar.addAction(self.action_10)
-        self.toolBar.addAction(self.action_11)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_6)
-        self.toolBar.addAction(self.action_9)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_8)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_15)
-        self.toolBar.addAction(self.action)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_4)
+        for menu in (self.menu, self.menu_3, self.menu_7, self.menu_8, self.menu_C, self.menu_4, self.menu_5, self.menu_2):
+            self.menubar.addAction(menu.menuAction())
+        for action in (self.action_5, self.action_10, self.action_11, self.action_6, self.action_9, self.action_8, self.action_15, self.action, self.action_4):
+            self.toolBar.addAction(action)
+            if action in (self.action_11, self.action_9, self.action_8, self.action):
+                self.toolBar.addSeparator()
 
-        self.retranslateUi(mainWindow)
-        self.tabWidget_2.setCurrentIndex(0)
-        QtCore.QMetaObject.connectSlotsByName(mainWindow)
+    def _style_sheet(self):
+        return """
+QWidget#centralwidget {
+    background-color: qlineargradient(
+        spread:pad, x1:0.02, y1:0.02, x2:1, y2:1,
+        stop:0 rgba(31, 34, 57, 255),
+        stop:0.38 rgba(204, 91, 158, 255),
+        stop:1 rgba(248, 244, 250, 255)
+    );
+}
+QFrame#headerFrame, QFrame#contentFrame {
+    border-radius: 18px;
+    background-color: rgba(255, 255, 255, 38);
+    border: 1px solid rgba(255, 255, 255, 88);
+}
+QLabel#titleLabel {
+    color: white;
+    font: 800 23pt "Microsoft JhengHei UI";
+}
+QLabel#subtitleLabel {
+    color: rgba(255, 255, 255, 215);
+    font: 10pt "Microsoft JhengHei UI";
+}
+QLineEdit#lineEdit {
+    min-height: 38px;
+    border: 1px solid rgba(255, 255, 255, 130);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 220);
+    padding: 0 12px;
+    color: rgb(35, 38, 58);
+    font: 10pt "Microsoft JhengHei UI";
+}
+QTabWidget::pane {
+    border: 0;
+    background: transparent;
+}
+QTabBar::tab {
+    min-width: 110px;
+    min-height: 34px;
+    margin-right: 8px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 210);
+    background: rgba(255, 255, 255, 36);
+    font: 700 10pt "Microsoft JhengHei UI";
+}
+QTabBar::tab:selected {
+    color: rgb(35, 38, 58);
+    background: rgba(255, 255, 255, 225);
+}
+QTableWidget#tableWidget {
+    border: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 226);
+    gridline-color: rgba(255, 255, 255, 0);
+    color: rgb(32, 35, 54);
+    font: 10pt "Microsoft JhengHei UI";
+    selection-background-color: rgba(85, 218, 226, 110);
+    selection-color: rgb(25, 29, 45);
+}
+QTableWidget#tableWidget::item {
+    border-radius: 12px;
+    padding: 8px;
+}
+QHeaderView::section {
+    border: 0;
+    border-radius: 8px;
+    padding: 6px;
+    margin: 2px;
+    color: rgb(55, 59, 86);
+    background: rgba(255, 255, 255, 180);
+    font: 700 9pt "Microsoft JhengHei UI";
+}
+QDockWidget {
+    color: white;
+    titlebar-close-icon: none;
+    titlebar-normal-icon: none;
+    font: 700 10pt "Microsoft JhengHei UI";
+}
+QWidget#dockWidgetContents {
+    background-color: rgba(31, 34, 57, 236);
+}
+QLabel#sideTitle {
+    color: white;
+    font: 800 13pt "Microsoft JhengHei UI";
+}
+QPushButton {
+    min-height: 34px;
+    border: 0;
+    border-radius: 11px;
+    padding: 7px 10px;
+    color: rgb(26, 31, 48);
+    background-color: rgb(170, 255, 255);
+    font: 700 10pt "Microsoft JhengHei UI";
+}
+QPushButton:hover {
+    background-color: rgb(203, 255, 250);
+}
+QPushButton:pressed {
+    background-color: rgb(126, 225, 229);
+    padding-top: 9px;
+}
+QMenuBar {
+    color: rgb(245, 247, 255);
+    background-color: rgb(31, 34, 57);
+    font: 10pt "Microsoft JhengHei UI";
+}
+QMenuBar::item:selected {
+    background: rgba(255, 255, 255, 40);
+}
+QMenu {
+    color: rgb(32, 35, 54);
+    background: rgba(255, 255, 255, 245);
+    border: 1px solid rgba(40, 43, 70, 40);
+    padding: 6px;
+}
+QMenu::item {
+    padding: 7px 28px 7px 22px;
+    border-radius: 7px;
+}
+QMenu::item:selected {
+    background: rgba(105, 214, 224, 90);
+}
+QToolBar {
+    background: rgb(31, 34, 57);
+    border: 0;
+    spacing: 8px;
+    padding: 6px;
+}
+QToolButton {
+    border: 0;
+    border-radius: 9px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 28);
+}
+QToolButton:hover {
+    background: rgba(255, 255, 255, 68);
+}
+QStatusBar {
+    color: rgb(245, 247, 255);
+    background: rgb(31, 34, 57);
+}
+QScrollBar:vertical, QScrollBar:horizontal {
+    background: transparent;
+    border: 0;
+    margin: 2px;
+}
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: rgba(43, 47, 74, 125);
+    border-radius: 6px;
+    min-height: 28px;
+    min-width: 28px;
+}
+"""
 
     def retranslateUi(self, mainWindow):
         _translate = QtCore.QCoreApplication.translate
-        mainWindow.setWindowTitle(_translate("mainWindow", "相似系列圖片自動整理系統1.4"))
-        self.tableWidget.setStatusTip(_translate("mainWindow", "雙擊圖片可以觸發編輯"))
-        self.tableWidget.setSortingEnabled(False)
-        item = self.tableWidget.verticalHeaderItem(0)
-        item.setText(_translate("mainWindow", "1"))
-        item = self.tableWidget.verticalHeaderItem(1)
-        item.setText(_translate("mainWindow", "2"))
-        item = self.tableWidget.verticalHeaderItem(2)
-        item.setText(_translate("mainWindow", "3"))
-        item = self.tableWidget.verticalHeaderItem(3)
-        item.setText(_translate("mainWindow", "4"))
-        item = self.tableWidget.verticalHeaderItem(4)
-        item.setText(_translate("mainWindow", "5"))
-        item = self.tableWidget.verticalHeaderItem(5)
-        item.setText(_translate("mainWindow", "6"))
-        item = self.tableWidget.verticalHeaderItem(6)
-        item.setText(_translate("mainWindow", "7"))
-        item = self.tableWidget.verticalHeaderItem(7)
-        item.setText(_translate("mainWindow", "8"))
-        item = self.tableWidget.verticalHeaderItem(8)
-        item.setText(_translate("mainWindow", "9"))
-        item = self.tableWidget.verticalHeaderItem(9)
-        item.setText(_translate("mainWindow", "10"))
-        item = self.tableWidget.verticalHeaderItem(10)
-        item.setText(_translate("mainWindow", "11"))
-        item = self.tableWidget.verticalHeaderItem(11)
-        item.setText(_translate("mainWindow", "12"))
-        item = self.tableWidget.verticalHeaderItem(12)
-        item.setText(_translate("mainWindow", "13"))
-        item = self.tableWidget.verticalHeaderItem(13)
-        item.setText(_translate("mainWindow", "14"))
-        item = self.tableWidget.verticalHeaderItem(14)
-        item.setText(_translate("mainWindow", "15"))
-        item = self.tableWidget.verticalHeaderItem(15)
-        item.setText(_translate("mainWindow", "16"))
-        item = self.tableWidget.verticalHeaderItem(16)
-        item.setText(_translate("mainWindow", "17"))
-        item = self.tableWidget.verticalHeaderItem(17)
-        item.setText(_translate("mainWindow", "18"))
-        item = self.tableWidget.verticalHeaderItem(18)
-        item.setText(_translate("mainWindow", "19"))
-        item = self.tableWidget.verticalHeaderItem(19)
-        item.setText(_translate("mainWindow", "20"))
-        item = self.tableWidget.verticalHeaderItem(20)
-        item.setText(_translate("mainWindow", "21"))
-        item = self.tableWidget.verticalHeaderItem(21)
-        item.setText(_translate("mainWindow", "22"))
-        item = self.tableWidget.verticalHeaderItem(22)
-        item.setText(_translate("mainWindow", "23"))
-        item = self.tableWidget.verticalHeaderItem(23)
-        item.setText(_translate("mainWindow", "24"))
-        item = self.tableWidget.verticalHeaderItem(24)
-        item.setText(_translate("mainWindow", "25"))
-        item = self.tableWidget.verticalHeaderItem(25)
-        item.setText(_translate("mainWindow", "26"))
-        item = self.tableWidget.verticalHeaderItem(26)
-        item.setText(_translate("mainWindow", "27"))
-        item = self.tableWidget.verticalHeaderItem(27)
-        item.setText(_translate("mainWindow", "28"))
-        item = self.tableWidget.verticalHeaderItem(28)
-        item.setText(_translate("mainWindow", "29"))
-        item = self.tableWidget.verticalHeaderItem(29)
-        item.setText(_translate("mainWindow", "30"))
-        item = self.tableWidget.verticalHeaderItem(30)
-        item.setText(_translate("mainWindow", "31"))
-        item = self.tableWidget.verticalHeaderItem(31)
-        item.setText(_translate("mainWindow", "32"))
-        item = self.tableWidget.verticalHeaderItem(32)
-        item.setText(_translate("mainWindow", "33"))
-        item = self.tableWidget.verticalHeaderItem(33)
-        item.setText(_translate("mainWindow", "34"))
-        item = self.tableWidget.verticalHeaderItem(34)
-        item.setText(_translate("mainWindow", "35"))
-        item = self.tableWidget.verticalHeaderItem(35)
-        item.setText(_translate("mainWindow", "36"))
-        item = self.tableWidget.verticalHeaderItem(36)
-        item.setText(_translate("mainWindow", "37"))
-        item = self.tableWidget.verticalHeaderItem(37)
-        item.setText(_translate("mainWindow", "38"))
-        item = self.tableWidget.verticalHeaderItem(38)
-        item.setText(_translate("mainWindow", "39"))
-        item = self.tableWidget.verticalHeaderItem(39)
-        item.setText(_translate("mainWindow", "40"))
-        item = self.tableWidget.verticalHeaderItem(40)
-        item.setText(_translate("mainWindow", "41"))
-        item = self.tableWidget.verticalHeaderItem(41)
-        item.setText(_translate("mainWindow", "42"))
-        item = self.tableWidget.verticalHeaderItem(42)
-        item.setText(_translate("mainWindow", "43"))
-        item = self.tableWidget.verticalHeaderItem(43)
-        item.setText(_translate("mainWindow", "44"))
-        item = self.tableWidget.verticalHeaderItem(44)
-        item.setText(_translate("mainWindow", "45"))
-        item = self.tableWidget.verticalHeaderItem(45)
-        item.setText(_translate("mainWindow", "46"))
-        item = self.tableWidget.verticalHeaderItem(46)
-        item.setText(_translate("mainWindow", "47"))
-        item = self.tableWidget.verticalHeaderItem(47)
-        item.setText(_translate("mainWindow", "48"))
-        item = self.tableWidget.verticalHeaderItem(48)
-        item.setText(_translate("mainWindow", "49"))
-        item = self.tableWidget.verticalHeaderItem(49)
-        item.setText(_translate("mainWindow", "50"))
-        item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("mainWindow", "1"))
-        item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("mainWindow", "2"))
-        item = self.tableWidget.horizontalHeaderItem(2)
-        item.setText(_translate("mainWindow", "3"))
-        item = self.tableWidget.horizontalHeaderItem(3)
-        item.setText(_translate("mainWindow", "4"))
-        item = self.tableWidget.horizontalHeaderItem(4)
-        item.setText(_translate("mainWindow", "5"))
-        item = self.tableWidget.horizontalHeaderItem(5)
-        item.setText(_translate("mainWindow", "6"))
-        item = self.tableWidget.horizontalHeaderItem(6)
-        item.setText(_translate("mainWindow", "7"))
-        item = self.tableWidget.horizontalHeaderItem(7)
-        item.setText(_translate("mainWindow", "8"))
-        item = self.tableWidget.horizontalHeaderItem(8)
-        item.setText(_translate("mainWindow", "9"))
-        item = self.tableWidget.horizontalHeaderItem(9)
-        item.setText(_translate("mainWindow", "10"))
-        item = self.tableWidget.horizontalHeaderItem(10)
-        item.setText(_translate("mainWindow", "11"))
-        item = self.tableWidget.horizontalHeaderItem(11)
-        item.setText(_translate("mainWindow", "12"))
-        item = self.tableWidget.horizontalHeaderItem(12)
-        item.setText(_translate("mainWindow", "13"))
-        item = self.tableWidget.horizontalHeaderItem(13)
-        item.setText(_translate("mainWindow", "14"))
-        item = self.tableWidget.horizontalHeaderItem(14)
-        item.setText(_translate("mainWindow", "15"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_3), _translate("mainWindow", "page 1"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab_3), _translate("mainWindow", "page 1"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_4), _translate("mainWindow", "page 2"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab_4), _translate("mainWindow", "page 2"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab), _translate("mainWindow", "Page 3"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab), _translate("mainWindow", "page 3"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("mainWindow", "Page 4"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab_2), _translate("mainWindow", "page 4"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_5), _translate("mainWindow", "Page 5"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab_5), _translate("mainWindow", "page 5"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_6), _translate("mainWindow", "Page 6"))
-        self.tabWidget_2.setTabToolTip(self.tabWidget_2.indexOf(self.tab_6), _translate("mainWindow", "page 6"))
-        self.menu.setTitle(_translate("mainWindow", "文件"))
-        self.menu_6.setStatusTip(_translate("mainWindow", "Recent file"))
-        self.menu_6.setTitle(_translate("mainWindow", "最近的文件"))
-        self.menu_2.setTitle(_translate("mainWindow", "幫助"))
-        self.menu_3.setTitle(_translate("mainWindow", "編輯"))
-        self.menu_4.setTitle(_translate("mainWindow", "设定"))
-        self.menu_5.setTitle(_translate("mainWindow", "窗口"))
-        self.menu_C.setTitle(_translate("mainWindow", "查看"))
-        self.menu_9.setTitle(_translate("mainWindow", "工具欄"))
-        self.menu_7.setTitle(_translate("mainWindow", "執行"))
-        self.menu_8.setTitle(_translate("mainWindow", "搜索"))
-        self.toolBar.setWindowTitle(_translate("mainWindow", "toolBar"))
-        self.pushButton_5.setToolTip(_translate("mainWindow", "增加行(E)"))
-        self.pushButton_5.setStatusTip(_translate("mainWindow", "增加1行"))
-        self.pushButton_5.setText(_translate("mainWindow", "增加行"))
-        self.pushButton_5.setShortcut(_translate("mainWindow", "E"))
-        self.pushButton_6.setToolTip(_translate("mainWindow", "減少行(R)"))
-        self.pushButton_6.setStatusTip(_translate("mainWindow", "減少1行(注意不要小過已用單元格，否則會刪除單元格內內容）"))
-        self.pushButton_6.setText(_translate("mainWindow", "減少行"))
-        self.pushButton_6.setShortcut(_translate("mainWindow", "R"))
-        self.pushButton_7.setToolTip(_translate("mainWindow", "縮小單元格(D)"))
-        self.pushButton_7.setStatusTip(_translate("mainWindow", "縮小單元格"))
-        self.pushButton_7.setText(_translate("mainWindow", "縮小單元格"))
-        self.pushButton_7.setShortcut(_translate("mainWindow", "D"))
-        self.pushButton_8.setToolTip(_translate("mainWindow", "放大單元格(F)"))
-        self.pushButton_8.setStatusTip(_translate("mainWindow", "放大單元格"))
-        self.pushButton_8.setText(_translate("mainWindow", "放大單元格"))
-        self.pushButton_8.setShortcut(_translate("mainWindow", "F"))
-        self.pushButton_9.setToolTip(_translate("mainWindow", "隱藏垂直標頭(Z)"))
-        self.pushButton_9.setStatusTip(_translate("mainWindow", "隱藏垂直標頭"))
-        self.pushButton_9.setText(_translate("mainWindow", "隱藏垂直標頭"))
-        self.pushButton_9.setShortcut(_translate("mainWindow", "Z"))
-        self.pushButton_10.setToolTip(_translate("mainWindow", "顯示垂直標頭(X)"))
-        self.pushButton_10.setStatusTip(_translate("mainWindow", "顯示垂直標頭"))
-        self.pushButton_10.setText(_translate("mainWindow", "顯示垂直標頭"))
-        self.pushButton_10.setShortcut(_translate("mainWindow", "X"))
-        self.pushButton_11.setToolTip(_translate("mainWindow", "隱藏水平標頭(C)"))
-        self.pushButton_11.setStatusTip(_translate("mainWindow", "隱藏水平標頭"))
-        self.pushButton_11.setText(_translate("mainWindow", "隱藏水平標頭"))
-        self.pushButton_11.setShortcut(_translate("mainWindow", "C"))
-        self.pushButton_12.setToolTip(_translate("mainWindow", "顯示水平標頭(V)"))
-        self.pushButton_12.setStatusTip(_translate("mainWindow", "顯示水平標頭"))
-        self.pushButton_12.setText(_translate("mainWindow", "顯示水平標頭"))
-        self.pushButton_12.setShortcut(_translate("mainWindow", "V"))
-        self.pushButton_2.setToolTip(_translate("mainWindow", "減少列(W)"))
-        self.pushButton_2.setStatusTip(_translate("mainWindow", "減少1列(注意不要小過已用單元格，否則會刪除單元格內內容）"))
-        self.pushButton_2.setText(_translate("mainWindow", "減少列"))
-        self.pushButton_2.setShortcut(_translate("mainWindow", "W"))
-        self.pushButton.setToolTip(_translate("mainWindow", "增加列（Q)"))
-        self.pushButton.setStatusTip(_translate("mainWindow", "增加1列"))
-        self.pushButton.setText(_translate("mainWindow", "增加列"))
-        self.pushButton.setShortcut(_translate("mainWindow", "Q"))
-        self.pushButton_4.setToolTip(_translate("mainWindow", "顯示單元格(S)"))
-        self.pushButton_4.setStatusTip(_translate("mainWindow", "顯示單元格"))
-        self.pushButton_4.setText(_translate("mainWindow", "顯示單元格"))
-        self.pushButton_4.setShortcut(_translate("mainWindow", "S"))
-        self.pushButton_3.setToolTip(_translate("mainWindow", "隱藏單元格(A)"))
-        self.pushButton_3.setStatusTip(_translate("mainWindow", "隱藏單元格"))
-        self.pushButton_3.setText(_translate("mainWindow", "隱藏單元格"))
-        self.pushButton_3.setShortcut(_translate("mainWindow", "A"))
-        self.action_F1.setText(_translate("mainWindow", "使用說明  "))
-        self.action_F1.setStatusTip(_translate("mainWindow", "Help"))
-        self.action_F1.setShortcut(_translate("mainWindow", "F1"))
-        self.action_about.setText(_translate("mainWindow", "關於 （about）"))
-        self.action_about.setStatusTip(_translate("mainWindow", "About"))
-        self.action_4.setText(_translate("mainWindow", "退出"))
-        self.action_4.setStatusTip(_translate("mainWindow", "exit"))
-        self.action_4.setShortcut(_translate("mainWindow", "Ctrl+Q"))
-        self.actionundo_CTRL_Z.setText(_translate("mainWindow", "撤消"))
-        self.actionundo_CTRL_Z.setStatusTip(_translate("mainWindow", "Undo"))
-        self.actionundo_CTRL_Z.setShortcut(_translate("mainWindow", "Ctrl+Z"))
-        self.actionRedo_Ctrl_Y.setText(_translate("mainWindow", "重做"))
-        self.actionRedo_Ctrl_Y.setStatusTip(_translate("mainWindow", "Redo"))
-        self.actionRedo_Ctrl_Y.setShortcut(_translate("mainWindow", "Ctrl+Y"))
-        self.actionCut.setText(_translate("mainWindow", "剪切\n"
-""))
-        self.actionCut.setStatusTip(_translate("mainWindow", "Cut"))
-        self.actionCut.setShortcut(_translate("mainWindow", "Ctrl+X"))
-        self.actionCopy.setText(_translate("mainWindow", "複製"))
-        self.actionCopy.setStatusTip(_translate("mainWindow", "Copy"))
-        self.actionCopy.setShortcut(_translate("mainWindow", "Ctrl+C"))
-        self.actionPaste.setText(_translate("mainWindow", "粘貼\n"
-""))
-        self.actionPaste.setStatusTip(_translate("mainWindow", "Paste"))
-        self.actionPaste.setShortcut(_translate("mainWindow", "Ctrl+V"))
-        self.actionSelect_All_Ctrl_A.setText(_translate("mainWindow", "全选"))
-        self.actionSelect_All_Ctrl_A.setStatusTip(_translate("mainWindow", "Select all"))
-        self.actionSelect_All_Ctrl_A.setShortcut(_translate("mainWindow", "Ctrl+A"))
-        self.action.setText(_translate("mainWindow", "最小化"))
-        self.action.setStatusTip(_translate("mainWindow", "Minimize"))
-        self.action.setShortcut(_translate("mainWindow", "Esc"))
-        self.action_3.setText(_translate("mainWindow", "檢查更新\n"
-""))
-        self.action_3.setStatusTip(_translate("mainWindow", "Check For Update"))
-        self.action_7.setText(_translate("mainWindow", "隱私聲明"))
-        self.action_7.setStatusTip(_translate("mainWindow", "Privacy"))
-        self.action_8.setText(_translate("mainWindow", "偏爱"))
-        self.action_8.setStatusTip(_translate("mainWindow", "Reference"))
-        self.action_10.setText(_translate("mainWindow", "打開\n"
-""))
-        self.action_10.setIconText(_translate("mainWindow", "打開資料夾"))
-        self.action_10.setStatusTip(_translate("mainWindow", "open file"))
-        self.action_10.setShortcut(_translate("mainWindow", "Ctrl+O"))
-        self.action_11.setText(_translate("mainWindow", "保存\n"
-""))
-        self.action_11.setStatusTip(_translate("mainWindow", "save file"))
-        self.action_11.setShortcut(_translate("mainWindow", "Ctrl+S"))
-        self.action_12.setText(_translate("mainWindow", "另存為"))
-        self.action_12.setStatusTip(_translate("mainWindow", "Save As"))
-        self.action_13.setText(_translate("mainWindow", "全部保存\n"
-""))
-        self.action_13.setStatusTip(_translate("mainWindow", "Save All"))
-        self.action_13.setShortcut(_translate("mainWindow", "Ctrl+Shift+S"))
-        self.action_19.setText(_translate("mainWindow", "打印"))
-        self.action_19.setStatusTip(_translate("mainWindow", "Print"))
-        self.action_19.setShortcut(_translate("mainWindow", "Ctrl+P"))
-        self.action_2.setText(_translate("mainWindow", "清除菜單"))
-        self.action_5.setText(_translate("mainWindow", "新建"))
-        self.action_5.setStatusTip(_translate("mainWindow", "create new file"))
-        self.action_5.setShortcut(_translate("mainWindow", "Ctrl+N"))
-        self.action_6.setText(_translate("mainWindow", "執行"))
-        self.action_6.setStatusTip(_translate("mainWindow", "Run"))
-        self.action_6.setShortcut(_translate("mainWindow", "F5"))
-        self.action_9.setText(_translate("mainWindow", "搜索文字"))
-        self.action_9.setStatusTip(_translate("mainWindow", "Search Text"))
-        self.action_9.setShortcut(_translate("mainWindow", "Ctrl+F"))
-        self.action_14.setText(_translate("mainWindow", "搜索資料夾"))
-        self.action_14.setStatusTip(_translate("mainWindow", "Search FilePath"))
-        self.action_14.setShortcut(_translate("mainWindow", "Ctrl+Shift+F"))
-        self.action_15.setText(_translate("mainWindow", "全屏幕模式"))
-        self.action_15.setStatusTip(_translate("mainWindow", "FullScreen Mode"))
-        self.action_15.setShortcut(_translate("mainWindow", "F11"))
-        self.action_17.setText(_translate("mainWindow", "資料夾"))
-        self._fix_visible_text(mainWindow)
-
-    def _fix_visible_text(self, mainWindow):
-        _translate = QtCore.QCoreApplication.translate
         mainWindow.setWindowTitle(_translate("mainWindow", "相似系列圖片自動整理系統 1.4"))
+        self.titleLabel.setText(_translate("mainWindow", "分組結果工作台"))
+        self.subtitleLabel.setText(_translate("mainWindow", "瀏覽、調整與保存相似圖片分組"))
+        self.lineEdit.setPlaceholderText(_translate("mainWindow", "搜尋檔名或分組..."))
+        self.sideTitle.setText(_translate("mainWindow", "整理工具"))
         self.tableWidget.setStatusTip(_translate("mainWindow", "雙擊圖片可以查看或編輯"))
         self.tabWidget_2.setTabText(0, _translate("mainWindow", "分組結果"))
         self.tabWidget_2.setTabText(1, _translate("mainWindow", "檢視"))
-        self.tabWidget_2.setTabText(2, _translate("mainWindow", "圖片"))
-        self.tabWidget_2.setTabText(3, _translate("mainWindow", "資料"))
-        self.tabWidget_2.setTabText(4, _translate("mainWindow", "設定"))
-        self.tabWidget_2.setTabText(5, _translate("mainWindow", "其他"))
+        self.tabWidget_2.setTabText(2, _translate("mainWindow", "資料夾"))
+        self.tabWidget_2.setTabText(3, _translate("mainWindow", "搜尋"))
         self.menu.setTitle(_translate("mainWindow", "文件"))
         self.menu_2.setTitle(_translate("mainWindow", "說明"))
         self.menu_3.setTitle(_translate("mainWindow", "編輯"))
@@ -767,53 +430,69 @@ class Ui_mainWindow(object):
         self.menu_9.setTitle(_translate("mainWindow", "工具欄"))
         self.menu_7.setTitle(_translate("mainWindow", "執行"))
         self.menu_8.setTitle(_translate("mainWindow", "搜索"))
-        self.pushButton_5.setText(_translate("mainWindow", "增加行"))
-        self.pushButton_6.setText(_translate("mainWindow", "減少行"))
-        self.pushButton_7.setText(_translate("mainWindow", "縮小單元格"))
-        self.pushButton_8.setText(_translate("mainWindow", "放大單元格"))
-        self.pushButton_9.setText(_translate("mainWindow", "隱藏垂直標頭"))
-        self.pushButton_10.setText(_translate("mainWindow", "顯示垂直標頭"))
-        self.pushButton_11.setText(_translate("mainWindow", "隱藏水平標頭"))
-        self.pushButton_12.setText(_translate("mainWindow", "顯示水平標頭"))
-        self.pushButton.setText(_translate("mainWindow", "增加列"))
-        self.pushButton_2.setText(_translate("mainWindow", "減少列"))
-        self.pushButton_3.setText(_translate("mainWindow", "隱藏單元格"))
-        self.pushButton_4.setText(_translate("mainWindow", "顯示單元格"))
-        self.action_F1.setText(_translate("mainWindow", "使用說明"))
-        self.action_about.setText(_translate("mainWindow", "關於"))
-        self.action_4.setText(_translate("mainWindow", "退出"))
-        self.actionundo_CTRL_Z.setText(_translate("mainWindow", "撤消"))
-        self.actionRedo_Ctrl_Y.setText(_translate("mainWindow", "重做"))
-        self.actionCut.setText(_translate("mainWindow", "剪切"))
-        self.actionCopy.setText(_translate("mainWindow", "複製"))
-        self.actionPaste.setText(_translate("mainWindow", "貼上"))
-        self.actionSelect_All_Ctrl_A.setText(_translate("mainWindow", "全選"))
-        self.action.setText(_translate("mainWindow", "最小化"))
-        self.action_3.setText(_translate("mainWindow", "檢查更新"))
-        self.action_7.setText(_translate("mainWindow", "隱私聲明"))
-        self.action_8.setText(_translate("mainWindow", "偏好設定"))
-        self.action_10.setText(_translate("mainWindow", "打開"))
+        self.toolBar.setWindowTitle(_translate("mainWindow", "工具列"))
+        labels = {
+            self.pushButton: ("增加列", "Q"),
+            self.pushButton_2: ("減少列", "W"),
+            self.pushButton_3: ("隱藏單元格", "A"),
+            self.pushButton_4: ("顯示單元格", "S"),
+            self.pushButton_5: ("增加行", "E"),
+            self.pushButton_6: ("減少行", "R"),
+            self.pushButton_7: ("縮小單元格", "D"),
+            self.pushButton_8: ("放大單元格", "F"),
+            self.pushButton_9: ("隱藏垂直標頭", "Z"),
+            self.pushButton_10: ("顯示垂直標頭", "X"),
+            self.pushButton_11: ("隱藏水平標頭", "C"),
+            self.pushButton_12: ("顯示水平標頭", "V"),
+        }
+        for button, (text, shortcut) in labels.items():
+            button.setText(_translate("mainWindow", text))
+            button.setToolTip(_translate("mainWindow", text + " (" + shortcut + ")"))
+            button.setShortcut(_translate("mainWindow", shortcut))
+        action_labels = [
+            (self.action_F1, "使用說明", "F1"),
+            (self.action_about, "關於", ""),
+            (self.action_4, "退出", "Ctrl+Q"),
+            (self.actionundo_CTRL_Z, "撤消", "Ctrl+Z"),
+            (self.actionRedo_Ctrl_Y, "重做", "Ctrl+Y"),
+            (self.actionCut, "剪切", "Ctrl+X"),
+            (self.actionCopy, "複製", "Ctrl+C"),
+            (self.actionPaste, "貼上", "Ctrl+V"),
+            (self.actionSelect_All_Ctrl_A, "全選", "Ctrl+A"),
+            (self.action, "最小化", "Esc"),
+            (self.action_3, "檢查更新", ""),
+            (self.action_7, "隱私聲明", ""),
+            (self.action_8, "偏好設定", ""),
+            (self.action_10, "打開", "Ctrl+O"),
+            (self.action_11, "保存", "Ctrl+S"),
+            (self.action_12, "另存為", ""),
+            (self.action_13, "全部保存", "Ctrl+Shift+S"),
+            (self.action_19, "打印", "Ctrl+P"),
+            (self.action_2, "清除菜單", ""),
+            (self.action_5, "新建", "Ctrl+N"),
+            (self.action_6, "執行", "F5"),
+            (self.action_9, "搜索文字", "Ctrl+F"),
+            (self.action_14, "搜索資料夾", "Ctrl+Shift+F"),
+            (self.action_15, "全屏幕模式", "F11"),
+            (self.action_17, "資料夾", ""),
+        ]
+        for action, text, shortcut in action_labels:
+            action.setText(_translate("mainWindow", text))
+            action.setStatusTip(_translate("mainWindow", text))
+            if shortcut:
+                action.setShortcut(_translate("mainWindow", shortcut))
         self.action_10.setIconText(_translate("mainWindow", "打開資料夾"))
-        self.action_11.setText(_translate("mainWindow", "保存"))
-        self.action_12.setText(_translate("mainWindow", "另存為"))
-        self.action_13.setText(_translate("mainWindow", "全部保存"))
-        self.action_19.setText(_translate("mainWindow", "打印"))
-        self.action_2.setText(_translate("mainWindow", "清除菜單"))
-        self.action_5.setText(_translate("mainWindow", "新建"))
-        self.action_6.setText(_translate("mainWindow", "執行"))
-        self.action_9.setText(_translate("mainWindow", "搜索文字"))
-        self.action_14.setText(_translate("mainWindow", "搜索資料夾"))
-        self.action_15.setText(_translate("mainWindow", "全屏幕模式"))
-        self.action_17.setText(_translate("mainWindow", "資料夾"))
+
 
 import image_rc
 
+
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = QtWidgets.QMainWindow()
     ui = Ui_mainWindow()
     ui.setupUi(mainWindow)
     mainWindow.show()
     sys.exit(app.exec_())
-

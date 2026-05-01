@@ -69,7 +69,7 @@ def a_hash(img):                                    #check
     # 求灰階值總和
     for i in range(8):
         for j in range(8):
-            sum_gray += gray[i][j]
+            sum_gray += int(gray[i][j])
 
     # 8*8灰階圖 平均
     average_gray = sum_gray/64
@@ -739,10 +739,14 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
 
         
        
-        G=0
-        
-        for group in class_list.CF_list:
-            buf_dir=os.path.join(download_dir, "Group" + str(G))
+        group_count = len(class_list.CF_list)
+        group_number_width = max(2, len(str(group_count)))
+
+        base_mtime = time.time()
+
+        for group_index, group in enumerate(class_list.CF_list, start=1):
+            group_name = "Group" + str(group_index).zfill(group_number_width)
+            buf_dir=os.path.join(download_dir, group_name)
             #print("\nreate dir : ",buf_dir," ====>   \n")
             os.makedirs(buf_dir, exist_ok=True)
             for buf_img in group.same:
@@ -752,7 +756,10 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
                 #print("store img filename : ",buf_filename)
                 #D:/store_img
                 cv2.imwrite(os.path.join(buf_dir, str(buf_filename)), store_img)
-            G+=1
+            # Windows Explorer often sorts Downloads by modified time descending.
+            # Make Group01 newest, Group02 next, etc. so the saved folders stay ordered.
+            group_mtime = base_mtime - group_index
+            os.utime(buf_dir, (group_mtime, group_mtime))
         print("store img end")
         self.IsStore+=1
        

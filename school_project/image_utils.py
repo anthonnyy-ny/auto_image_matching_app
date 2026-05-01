@@ -25,7 +25,7 @@ def iter_image_files(directory_name):
         path = directory / filename
         if path.is_file() and path.suffix.lower() in SUPPORTED_IMAGE_EXTENSIONS:
             files.append(path)
-    return sorted(files, key=lambda path: path.name.lower())
+    return files
 
 
 def jpg_filename(filename):
