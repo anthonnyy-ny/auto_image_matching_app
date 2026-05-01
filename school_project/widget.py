@@ -107,6 +107,19 @@ QPushButton#pushButton_3:hover {
 QPushButton#pushButton_4 {
     background-color: rgba(255, 255, 255, 210);
 }
+QComboBox {
+    border: 0;
+    border-radius: 12px;
+    min-height: 38px;
+    padding: 0 12px;
+    font: 700 10pt "Microsoft JhengHei UI";
+    color: rgb(22, 30, 48);
+    background-color: rgba(255, 255, 255, 225);
+}
+QComboBox::drop-down {
+    border: 0;
+    width: 28px;
+}
 QProgressBar {
     min-height: 18px;
     border: 0;
@@ -188,6 +201,11 @@ QProgressBar::chunk {
         self.buttonLayout.setSpacing(10)
         self.buttonLayout.setObjectName("buttonLayout")
 
+        self.comboBox = QtWidgets.QComboBox(layout_parent)
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.setMinimumHeight(38)
+        self.buttonLayout.addWidget(self.comboBox)
+
         self.pushButton = QtWidgets.QPushButton(layout_parent)
         self.pushButton.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.pushButton.setObjectName("pushButton")
@@ -232,8 +250,8 @@ QProgressBar::chunk {
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "相似系列圖片自動整理系統 1.4"))
         self.label.setText(_translate("Form", "相似系列圖片自動整理系統"))
-        self.subtitleLabel.setText(_translate("Form", "選擇資料夾後會自動預覽圖片，掃描後依照相似內容分組整理。"))
-        self.folderLabel.setText(_translate("Form", "已加入的資料夾"))
+        self.subtitleLabel.setText(_translate("Form", "選擇或拖入圖片/資料夾，掃描後依照相似內容自動分組。"))
+        self.folderLabel.setText(_translate("Form", "已加入的圖片或資料夾"))
         self.previewLabel.setText(_translate("Form", "圖片預覽"))
         self.listWidget.setStatusTip(_translate("Form", "path"))
         self.listWidget.setSortingEnabled(False)
@@ -253,6 +271,11 @@ QProgressBar::chunk {
         self.pushButton_4.setStatusTip(_translate("Form", "取消掃描"))
         self.pushButton_4.setText(_translate("Form", "取消掃描"))
         self.pushButton_4.setShortcut(_translate("Form", "3"))
+        self.comboBox.clear()
+        self.comboBox.addItem(_translate("Form", "標準模式"), "standard")
+        self.comboBox.addItem(_translate("Form", "嚴格模式"), "strict")
+        self.comboBox.addItem(_translate("Form", "寬鬆模式"), "loose")
+        self.comboBox.addItem(_translate("Form", "快速模式"), "fast")
 
 
 import image_rc

@@ -34,7 +34,8 @@ from controller2 import MainWindow_controller2
 
 import class_list
 from app_paths import debug_output_dir, default_open_dir
-from image_utils import iter_image_files
+from image_matcher import get_match_settings
+from image_utils import collect_image_files, iter_image_files
 
 
 
@@ -97,13 +98,16 @@ class ScanWorker(QThread):
     finished = pyqtSignal(object, float, int)
     failed = pyqtSignal(str)
 
-    def __init__(self, directory_name):
+    def __init__(self, input_paths):
         super().__init__()
-        self.directory_name = directory_name
+        if isinstance(input_paths, (list, tuple)):
+            self.input_paths = list(input_paths)
+        else:
+            self.input_paths = [input_paths]
 
     def run(self):
         start = time.time()
-        image_files = iter_image_files(self.directory_name)
+        image_files = collect_image_files(self.input_paths)
         if len(image_files) == 0:
             self.finished.emit([], 0, 0)
             return
@@ -131,9 +135,10 @@ class MatchWorker(QThread):
     finished = pyqtSignal(object, float)
     failed = pyqtSignal(str)
 
-    def __init__(self, images):
+    def __init__(self, images, settings):
         super().__init__()
         self.images = list(images)
+        self.settings = settings
 
     def run(self):
         start = time.time()
@@ -153,14 +158,14 @@ class MatchWorker(QThread):
 
             IsClass = False
             for index in range(len(list_classification)):
-                IsSame, IsBig = sift_ahash(image_item, list_classification[index].same[0])
+                IsSame, IsBig = sift_ahash(image_item, list_classification[index].same[0], self.settings)
                 if(IsSame):
                     IsClass = True
                     list_classification[index].save_img(image_item, IsBig)
                     if(IsBig):
                         pop_list = []
                         for buf_index in range(index + 1, len(list_classification)):
-                            buf_Same, buf_Big = sift_ahash(list_classification[buf_index].same[0], list_classification[index].same[0])
+                            buf_Same, buf_Big = sift_ahash(list_classification[buf_index].same[0], list_classification[index].same[0], self.settings)
                             if(buf_Same & (buf_Big == False)):
                                 list_classification[index].union(list_classification[buf_index])
                                 pop_list.append(buf_index)
@@ -419,6 +424,7 @@ class IMG:
         self.area=0
         self.width=0
         self.hight=0
+        self.hash_str=None
 
 
     def img_shape(self):        #check
@@ -440,6 +446,7 @@ class IMG:
 
     def create_sift(self):      #check
         self.kp,self.des=sift.detectAndCompute(self.gray_img, None)
+        self.hash_str=a_hash(self.img)
 
     def showIMG(self):          #check
         cv2.imshow(self.name, self.img)
@@ -519,10 +526,15 @@ def showCutIMG(img_1,img_2,save_img):
     cv2.imwrite(str(debug_output_dir() / ("small_" + str(save_img) + ".jpg")), img_2)
 
 
-def sift_ahash(img_1,img_2):
+def sift_ahash(img_1,img_2, settings=None):
+    settings = settings or get_match_settings("standard")
     save_img=0
     IMG_1=img_1
     IMG_2=img_2
+
+    if settings.full_hash_prefilter and IMG_1.hash_str and IMG_2.hash_str:
+        if cam_hash(IMG_1.hash_str, IMG_2.hash_str) > settings.full_hash_reject_threshold:
+            return False, False
 
     if IMG_1.des is None or IMG_2.des is None:
         return False, False
@@ -689,7 +701,7 @@ def sift_ahash(img_1,img_2):
 
             dis=cam_hash(a_hash(IMG_one),a_hash(IMG_two))
             #print("dis : ",dis)
-            if(dis<10):
+            if(dis<settings.crop_hash_threshold):
                 if(BUF_one.area>BUF_two.area):
                     return True, True
                 else:
@@ -741,6 +753,8 @@ class Form_controller(QtWidgets.QMainWindow):
         super().__init__() # in python3, super(Class, self).xxx = super().xxx
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.setAcceptDrops(True)
+        self.ui.listWidget.setAcceptDrops(False)
         self.setup_control()
         
        
@@ -782,15 +796,39 @@ class Form_controller(QtWidgets.QMainWindow):
        if not filepath:
            return
        print(filepath)
-       self.ui.listWidget.addItem(filepath)
-       self.ui.listWidget.setCurrentRow(self.ui.listWidget.count() - 1)
-       self.updatePreview(filepath)
+       self.add_input_paths([filepath])
+
+    def add_input_paths(self, paths):
+        added = False
+        existing = {self.ui.listWidget.item(i).text() for i in range(self.ui.listWidget.count())}
+        for path in paths:
+            if path and path not in existing:
+                self.ui.listWidget.addItem(path)
+                existing.add(path)
+                added = True
+        if added:
+            self.ui.listWidget.setCurrentRow(self.ui.listWidget.count() - 1)
+            self.updatePreview(self.ui.listWidget.currentItem().text())
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dropEvent(self, event):
+        paths = []
+        for url in event.mimeData().urls():
+            if url.isLocalFile():
+                paths.append(url.toLocalFile())
+        self.add_input_paths(paths)
+        event.acceptProposedAction()
        
     def updatePreview(self, directory_name):
         if not hasattr(self.ui, "previewListWidget") or not directory_name:
             return
         self.ui.previewListWidget.clear()
-        for image_path in iter_image_files(directory_name)[:12]:
+        for image_path in collect_image_files([directory_name])[:12]:
             pixmap = QPixmap(str(image_path))
             if pixmap.isNull():
                 continue
@@ -811,8 +849,8 @@ class Form_controller(QtWidgets.QMainWindow):
         if current_item is None:
             QMessageBox.warning(self, "提示", "請先選擇圖片資料夾。")
             return
-        filepath = current_item.text()
-        image_files = iter_image_files(filepath)
+        input_paths = [self.ui.listWidget.item(i).text() for i in range(self.ui.listWidget.count())]
+        image_files = collect_image_files(input_paths)
         if len(image_files) == 0:
             QMessageBox.warning(self, "提示", "這個資料夾沒有可掃描的圖片。")
             return
@@ -824,7 +862,7 @@ class Form_controller(QtWidgets.QMainWindow):
         print("read file  ")
         print("len img : ", len(image_files))
 
-        self.scan_worker = ScanWorker(filepath)
+        self.scan_worker = ScanWorker(input_paths)
         self.scan_worker.progress.connect(self.signal_accept)
         self.scan_worker.finished.connect(self.scan_finished)
         self.scan_worker.failed.connect(lambda msg: QMessageBox.warning(self, "提示", msg))
@@ -931,7 +969,10 @@ class Form_controller(QtWidgets.QMainWindow):
         self.ui.progressBar.setValue(0)
         self.ui.pushButton_2.setEnabled(False)
         self.ui.pushButton_3.setEnabled(False)
-        self.match_worker = MatchWorker(list(img))
+        mode = "standard"
+        if hasattr(self.ui, "comboBox"):
+            mode = self.ui.comboBox.currentData() or "standard"
+        self.match_worker = MatchWorker(list(img), get_match_settings(mode))
         self.match_worker.progress.connect(self.signal_accept)
         self.match_worker.finished.connect(self.match_finished)
         self.match_worker.failed.connect(lambda msg: QMessageBox.warning(self, "提示", msg))

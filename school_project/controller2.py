@@ -9,6 +9,8 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog
 import cv2
+import csv
+import json
 import time
 import sys
 
@@ -571,6 +573,61 @@ def transfer_filename( buf_filename):
 #============================================================================================
 
 
+class ImagePreviewDialog(QtWidgets.QDialog):
+    def __init__(self, image_path, filename, group_name, parent=None):
+        super().__init__(parent)
+        self.image_path = image_path
+        self.setWindowTitle(filename)
+        self.resize(860, 640)
+        self.setMinimumSize(560, 420)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        self.title = QtWidgets.QLabel(filename)
+        self.title.setStyleSheet('font: 700 14pt "Microsoft JhengHei UI";')
+        layout.addWidget(self.title)
+
+        self.meta = QtWidgets.QLabel(group_name + "    " + image_path)
+        self.meta.setWordWrap(True)
+        self.meta.setStyleSheet('color: rgb(80, 84, 110); font: 10pt "Microsoft JhengHei UI";')
+        layout.addWidget(self.meta)
+
+        self.imageLabel = QtWidgets.QLabel()
+        self.imageLabel.setAlignment(Qt.AlignCenter)
+        self.imageLabel.setStyleSheet("background: rgb(30, 32, 48); border-radius: 10px;")
+        layout.addWidget(self.imageLabel, 1)
+
+        buttons = QtWidgets.QHBoxLayout()
+        open_button = QtWidgets.QPushButton("打开所在文件夹")
+        close_button = QtWidgets.QPushButton("关闭")
+        open_button.clicked.connect(self.open_folder)
+        close_button.clicked.connect(self.accept)
+        buttons.addStretch(1)
+        buttons.addWidget(open_button)
+        buttons.addWidget(close_button)
+        layout.addLayout(buttons)
+        self.update_pixmap()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_pixmap()
+
+    def update_pixmap(self):
+        pixmap = QPixmap(self.image_path)
+        if pixmap.isNull():
+            self.imageLabel.setText("无法预览图片")
+            return
+        target = self.imageLabel.size() - QtCore.QSize(24, 24)
+        self.imageLabel.setPixmap(pixmap.scaled(target, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+    def open_folder(self):
+        folder = os.path.dirname(self.image_path)
+        if hasattr(os, "startfile"):
+            os.startfile(folder)
+
+
 
 class MainWindow_controller2(QtWidgets.QMainWindow):
     def __init__(self):
@@ -609,6 +666,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.pushButton_10.clicked.connect(self.showVerticalHeader)
        self.ui.pushButton_11.clicked.connect(self.hideHorizontallHeader)
        self.ui.pushButton_12.clicked.connect(self.showHorizontallHeader)
+       self.ui.tableWidget.itemDoubleClicked.connect(self.preview_item)
 
        self.populate_results()
        return
@@ -675,11 +733,21 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             for column, buf_img in enumerate(group.same):
                 item = QtWidgets.QTableWidgetItem(QIcon(buf_img.name), buf_img.filename)
                 item.setToolTip(buf_img.name)
+                item.setData(Qt.UserRole, buf_img.name)
+                item.setData(Qt.UserRole + 1, group_name)
                 self.ui.tableWidget.setItem(row, column, item)
 
         if group_count == 0:
             self.ui.tableWidget.setVerticalHeaderItem(0, QtWidgets.QTableWidgetItem("No result"))
         self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups", 5000)
+
+    def preview_item(self, item):
+        image_path = item.data(Qt.UserRole)
+        group_name = item.data(Qt.UserRole + 1) or ""
+        if not image_path:
+            return
+        dialog = ImagePreviewDialog(image_path, item.text(), group_name, self)
+        dialog.exec_()
 
     def addrow(self):
         if(self.IsStore==1):
@@ -803,6 +871,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         group_number_width = max(2, len(str(group_count)))
 
         base_mtime = time.time()
+        manifest_rows = []
 
         for group_index, group in enumerate(class_list.CF_list, start=1):
             group_name = "Group" + str(group_index).zfill(group_number_width)
@@ -818,11 +887,26 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
                 buf_filename=transfer_filename(buf_img.filename)
                 #print("store img filename : ",buf_filename)
                 #D:/store_img
-                cv2.imwrite(os.path.join(buf_dir, str(buf_filename)), store_img)
+                output_path = os.path.join(buf_dir, str(buf_filename))
+                cv2.imwrite(output_path, store_img)
+                manifest_rows.append({
+                    "group": group_name,
+                    "filename": buf_img.filename,
+                    "source_path": buf_img.name,
+                    "saved_path": output_path,
+                })
             # Windows Explorer often sorts Downloads by modified time descending.
             # Make Group01 newest, Group02 next, etc. so the saved folders stay ordered.
             group_mtime = base_mtime - group_index
             os.utime(buf_dir, (group_mtime, group_mtime))
+        manifest_csv = os.path.join(download_dir, "manifest.csv")
+        with open(manifest_csv, "w", newline="", encoding="utf-8-sig") as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=["group", "filename", "source_path", "saved_path"])
+            writer.writeheader()
+            writer.writerows(manifest_rows)
+        manifest_json = os.path.join(download_dir, "manifest.json")
+        with open(manifest_json, "w", encoding="utf-8") as json_file:
+            json.dump(manifest_rows, json_file, ensure_ascii=False, indent=2)
         print("store img end")
         self.IsStore+=1
        
