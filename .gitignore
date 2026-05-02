@@ -13,4 +13,7 @@ env/
 
 *.log
 .cache/
+web_runtime/
+web_app/frontend/node_modules/
+web_app/frontend/dist/
 ui_*_check.png

@@ -38,3 +38,9 @@ def feature_cache_dir():
     path = PROJECT_ROOT / ".cache" / "features"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def web_runtime_dir():
+    path = PROJECT_ROOT / "web_runtime"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
