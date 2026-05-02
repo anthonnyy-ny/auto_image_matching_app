@@ -50,6 +50,22 @@ class FeatureCache:
             self.misses += 1
             return None
 
+    def load_hash(self, image_path):
+        cache_path = self._cache_path(image_path)
+        if cache_path is None or not cache_path.exists():
+            self.misses += 1
+            return None
+        try:
+            with np.load(cache_path, allow_pickle=False) as data:
+                if str(data["version"]) != self.VERSION:
+                    self.misses += 1
+                    return None
+                self.hits += 1
+                return str(data["hash_str"])
+        except Exception:
+            self.misses += 1
+            return None
+
     def save(self, image_path, hash_str, keypoints, descriptors):
         cache_path = self._cache_path(image_path)
         if cache_path is None:

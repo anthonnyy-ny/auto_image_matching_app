@@ -27,3 +27,12 @@ class MatchResponse(BaseModel):
     elapsed: float
     stats: Dict[str, Any]
     groups: List[Dict[str, Any]]
+
+
+class ResultsUpdate(BaseModel):
+    groups: List[Dict[str, Any]]
+
+
+class JobResponse(BaseModel):
+    job_id: str
+    status: str

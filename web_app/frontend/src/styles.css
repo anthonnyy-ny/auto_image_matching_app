@@ -18,7 +18,7 @@ body {
     linear-gradient(135deg, #321f46 0%, #8a4d96 36%, #d579b1 68%, #fff6fb 100%);
 }
 
-button, input {
+button, input, select {
   font: inherit;
 }
 
@@ -111,7 +111,7 @@ label {
   gap: 10px;
 }
 
-input {
+input, select {
   width: 100%;
   min-height: 44px;
   border: 1px solid rgba(180, 114, 186, 0.25);
@@ -119,6 +119,10 @@ input {
   padding: 0 14px;
   color: #2d2138;
   background: rgba(255, 255, 255, 0.84);
+}
+
+select {
+  margin-top: 10px;
 }
 
 button {
@@ -132,6 +136,23 @@ button {
   cursor: pointer;
 }
 
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 14px;
+  padding: 0 18px;
+  color: #23172e;
+  background: #b0fffc;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: #ffe1f5;
+}
+
 button:hover {
   background: #ffe1f5;
 }
@@ -139,6 +160,11 @@ button:hover {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.ghost {
+  background: rgba(255, 255, 255, 0.7);
+  color: #5c356d;
 }
 
 .file {
@@ -156,6 +182,59 @@ button:disabled {
   word-break: break-all;
 }
 
+.progress {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(116, 70, 138, 0.18);
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b0fffc, #ff7ec4);
+  transition: width 220ms ease;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(8, auto);
+  gap: 10px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.metric {
+  min-height: 78px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 18px;
+  background: rgba(255, 250, 253, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.metric span {
+  display: block;
+  color: #765181;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 6px;
+  color: #2d2138;
+  font-size: 24px;
+}
+
 .results {
   margin-top: 18px;
   min-height: 360px;
@@ -166,6 +245,19 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.group-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.group-check input {
+  width: 18px;
+  min-height: 18px;
 }
 
 .section-title h2, .group h3 {
@@ -203,6 +295,18 @@ figure {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(255, 213, 238, 0.88);
+  cursor: grab;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+figure:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 126, 196, 0.95);
+}
+
+figure.selected {
+  box-shadow: 0 0 0 3px rgba(176, 255, 252, 0.95);
+  border-color: #ff7ec4;
 }
 
 img {
@@ -222,6 +326,61 @@ figcaption {
   text-overflow: ellipsis;
 }
 
+.preview {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(30, 18, 44, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.preview-card {
+  position: relative;
+  width: min(980px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 24px;
+  padding: 20px;
+  background: rgba(255, 250, 253, 0.94);
+  box-shadow: 0 28px 70px rgba(41, 22, 55, 0.38);
+}
+
+.preview-card img {
+  width: 100%;
+  max-height: 70vh;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #23172e;
+}
+
+.preview-card h3 {
+  margin: 16px 0 4px;
+}
+
+.preview-card p {
+  margin-bottom: 6px;
+  color: #493056;
+  font-weight: 800;
+}
+
+.preview-card small {
+  display: block;
+  color: #7d5888;
+  word-break: break-all;
+}
+
+.preview-close {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  min-height: 38px;
+}
+
 @media (max-width: 900px) {
   .shell {
     width: min(100% - 28px, 1440px);
@@ -233,5 +392,13 @@ figcaption {
 
   .stats, .panel {
     margin-top: 14px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

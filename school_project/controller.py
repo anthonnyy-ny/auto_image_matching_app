@@ -505,7 +505,11 @@ class IMG:
 
         if self.img is None:
             raise ValueError("Image could not be read: " + self.name)
+        if self.img.size == 0:
+            raise ValueError("Image is empty: " + self.name)
         hight,width=self.img.shape[:2]
+        if width <= 0 or hight <= 0:
+            raise ValueError("Image has invalid size: " + self.name)
         if((width>=1000)&(hight>=1000)):
             self.img=new_resize_img(self.img,2**(-1))
         elif((width>=2000)&(hight>=2000)):

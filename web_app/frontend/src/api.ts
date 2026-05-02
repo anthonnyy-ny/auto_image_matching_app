@@ -27,6 +27,17 @@ export type MatchResponse = {
   groups: ResultGroup[];
 };
 
+export type JobState = {
+  id: string;
+  project_id: string;
+  status: "running" | "done" | "failed" | "cancelled";
+  progress: number;
+  message: string;
+  metrics?: Record<string, unknown>;
+  result?: MatchResponse;
+  error?: string;
+};
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, options);
   if (!response.ok) {
@@ -44,7 +55,15 @@ export function createProject(name: string) {
   });
 }
 
-export function uploadImages(projectId: string, files: FileList) {
+export function listProjects() {
+  return request<Project[]>("/api/projects");
+}
+
+export function getProject(projectId: string) {
+  return request<Project>(`/api/projects/${projectId}`);
+}
+
+export function uploadImages(projectId: string, files: FileList | File[]) {
   const form = new FormData();
   Array.from(files).forEach((file) => form.append("files", file));
   return request<{ uploaded: number; image_count: number }>(`/api/projects/${projectId}/images`, {
@@ -59,6 +78,55 @@ export function matchProject(projectId: string, mode = "fast") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode }),
   });
+}
+
+export function startMatchJob(projectId: string, mode = "fast") {
+  return request<{ job_id: string; status: string }>(`/api/projects/${projectId}/match/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  });
+}
+
+export function getJob(jobId: string) {
+  return request<JobState>(`/api/jobs/${jobId}`);
+}
+
+export function cancelJob(jobId: string) {
+  return request<JobState>(`/api/jobs/${jobId}/cancel`, { method: "POST" });
+}
+
+export function clearCache() {
+  return request<{ removed_files: number; removed_bytes: number }>("/api/cache/clear", { method: "POST" });
+}
+
+export function getResults(projectId: string) {
+  return request<{ project_id: string; groups: ResultGroup[]; stats: Record<string, unknown> }>(`/api/projects/${projectId}/results`);
+}
+
+export function updateResults(projectId: string, groups: ResultGroup[]) {
+  return request<{ project_id: string; groups: ResultGroup[] }>(`/api/projects/${projectId}/results`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ groups }),
+  });
+}
+
+export function importProject(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return request<Project>("/api/projects/import", {
+    method: "POST",
+    body: form,
+  });
+}
+
+export function exportUrl(projectId: string) {
+  return `${API_BASE}/api/projects/${projectId}/export`;
+}
+
+export function projectFileUrl(projectId: string) {
+  return `${API_BASE}/api/projects/${projectId}/project-file`;
 }
 
 export function imageUrl(projectId: string, sourcePath: string) {
