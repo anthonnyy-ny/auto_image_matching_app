@@ -39,6 +39,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabe
     
 from UI2 import Ui_mainWindow
 from savefile import Ui_Dialog
+from result_model import ResultTableModel, ThumbnailCache, ThumbnailDelegate
 
 import class_list
 from app_paths import debug_output_dir, default_open_dir, downloads_dir
@@ -634,6 +635,11 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         super().__init__() # in python3, super(Class, self).xxx = super().xxx
         self.ui = Ui_mainWindow()
         self.ui.setupUi(self)
+        self.thumbnail_cache = ThumbnailCache()
+        self.result_model = ResultTableModel(class_list.CF_list, self)
+        self.thumbnail_delegate = ThumbnailDelegate(self.thumbnail_cache, self.ui.tableWidget)
+        self.ui.tableWidget.setModel(self.result_model)
+        self.ui.tableWidget.setItemDelegate(self.thumbnail_delegate)
         self.setup_control()
         self.IsStore=0
         
@@ -666,114 +672,49 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.pushButton_10.clicked.connect(self.showVerticalHeader)
        self.ui.pushButton_11.clicked.connect(self.hideHorizontallHeader)
        self.ui.pushButton_12.clicked.connect(self.showHorizontallHeader)
-       self.ui.tableWidget.itemDoubleClicked.connect(self.preview_item)
+       self.ui.tableWidget.doubleClicked.connect(self.preview_item)
 
        self.populate_results()
        return
 
-      # self.ui.statusBar.addPermanentWidget(self.ui.lineEdit)
-       print("\n\nshow block\n")
-       CF_len=len(class_list.CF_list)
-       print("global CF_list len: ",len(class_list.CF_list))
-       
-         
-       row_i=col_j=0
-       
-       for buf_group in class_list.CF_list:
-          item = QtWidgets.QTableWidgetItem()
-          self.ui.tableWidget.setVerticalHeaderItem(row_i, item)
-          item = self.ui.tableWidget.verticalHeaderItem(row_i)
-          #group_string="group"+str(i)
-          #item.setText(_translate("mainWindow", group_string))
-          for buf_img in buf_group.same:
-              
-              self.ui.tableWidget.setIconSize(QSize(150,150))
-              self.ui.tableWidget.setColumnWidth(col_j, 150)
-              self.ui.tableWidget.setRowHeight(row_i, 150)
-              rootpath = buf_img.name
-              buf_filename=buf_img.filename
-              item = QtWidgets.QTableWidgetItem(QIcon(rootpath),"")
-              self.ui.tableWidget.setItem(row_i,col_j,item)
-              col_j+=1 
-          row_i+=1
-          col_j=0
-       print("group i : ",row_i)
-       
-       row_i=int(row_i)
-       for row in range(1,50):
-           if(row<row_i):   
-               self.ui.tableWidget.showRow(int(row))
-           else:
-               self.ui.tableWidget.hideRow(int(row))
-#       self.ui.tableWidget.hideRow(6)
-#       self.ui.tableWidget.hideRow(7)
-#       self.ui.tableWidget.hideRow(8)
-
     def populate_results(self):
         groups = class_list.CF_list
         group_count = len(groups)
-        max_group_size = max((len(group.same) for group in groups), default=1)
-        row_count = max(1, group_count)
-        column_count = max(1, max_group_size)
-
-        self.ui.tableWidget.clear()
-        self.ui.tableWidget.setRowCount(row_count)
-        self.ui.tableWidget.setColumnCount(column_count)
-        self.ui.tableWidget.setIconSize(QSize(150,150))
-
-        for column in range(column_count):
-            self.ui.tableWidget.setHorizontalHeaderItem(column, QtWidgets.QTableWidgetItem(str(column + 1)))
+        self.thumbnail_cache.clear()
+        self.result_model.set_groups(groups)
+        for column in range(self.result_model.columnCount()):
             self.ui.tableWidget.setColumnWidth(column, 165)
-
-        group_number_width = max(2, len(str(group_count)))
-        for row, group in enumerate(groups):
-            group_name = "Group" + str(row + 1).zfill(group_number_width)
-            self.ui.tableWidget.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(group_name + " (" + str(group.img_count) + ")"))
+        for row in range(self.result_model.rowCount()):
             self.ui.tableWidget.setRowHeight(row, 165)
-            for column, buf_img in enumerate(group.same):
-                item = QtWidgets.QTableWidgetItem(QIcon(buf_img.name), buf_img.filename)
-                item.setToolTip(buf_img.name)
-                item.setData(Qt.ItemDataRole.UserRole, buf_img.name)
-                item.setData(Qt.ItemDataRole.UserRole.value + 1, group_name)
-                self.ui.tableWidget.setItem(row, column, item)
-
-        if group_count == 0:
-            self.ui.tableWidget.setVerticalHeaderItem(0, QtWidgets.QTableWidgetItem("No result"))
-        self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups", 5000)
+        self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups, lazy thumbnails enabled", 5000)
         self.animate_results()
 
     def animate_results(self):
-        effect = QtWidgets.QGraphicsOpacityEffect(self.ui.tableWidget)
-        self.ui.tableWidget.setGraphicsEffect(effect)
-        self._table_fade = QtCore.QPropertyAnimation(effect, b"opacity", self)
-        self._table_fade.setDuration(520)
-        self._table_fade.setStartValue(0.0)
-        self._table_fade.setEndValue(1.0)
-        self._table_fade.setEasingCurve(QtCore.QEasingCurve.Type.OutCubic)
-        self._table_fade.start()
+        self.ui.tableWidget.viewport().update()
 
-    def preview_item(self, item):
-        image_path = item.data(Qt.ItemDataRole.UserRole)
-        group_name = item.data(Qt.ItemDataRole.UserRole.value + 1) or ""
+    def preview_item(self, index):
+        if not index.isValid():
+            return
+        image_path = index.data(ResultTableModel.ImagePathRole)
+        group_name = index.data(ResultTableModel.GroupNameRole) or ""
         if not image_path:
             return
-        dialog = ImagePreviewDialog(image_path, item.text(), group_name, self)
+        dialog = ImagePreviewDialog(image_path, index.data() or "", group_name, self)
         dialog.exec()
 
     def addrow(self):
         if(self.IsStore==1):
             self.IsStore=0
             return
-        row_count = self.ui.tableWidget.rowCount()
-        self.ui.tableWidget.insertRow(row_count)
+        self.result_model.insert_extra_row()
+        self.ui.tableWidget.setRowHeight(self.result_model.rowCount() - 1, 165)
         self.IsStore+=1
     
     def deleterow(self):
         if(self.IsStore==1):
             self.IsStore=0
             return
-        row_count = self.ui.tableWidget.rowCount()
-        self.ui.tableWidget.removeRow(row_count-1)
+        self.result_model.remove_extra_row()
         self.IsStore+=1
         
     
@@ -781,16 +722,15 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         if(self.IsStore==1):
             self.IsStore=0
             return
-        column_count = self.ui.tableWidget.columnCount()
-        self.ui.tableWidget.insertColumn(column_count)
+        self.result_model.insert_extra_column()
+        self.ui.tableWidget.setColumnWidth(self.result_model.columnCount() - 1, 165)
         self.IsStore+=1
     
     def deletecolumn(self):
         if(self.IsStore==1):
             self.IsStore=0
             return
-        column_count = self.ui.tableWidget.columnCount()
-        self.ui.tableWidget.removeColumn(column_count-1)
+        self.result_model.remove_extra_column()
         self.IsStore+=1
 
     def hidegrid(self):
@@ -820,13 +760,8 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             self.IsStore=0
             return
         row_i=col_j=0
-        for row_i in range(15):
-          item = QtWidgets.QTableWidgetItem()
-          self.ui.tableWidget.setVerticalHeaderItem(row_i, item)
-          item = self.ui.tableWidget.verticalHeaderItem(row_i)
-          #group_string="group"+str(i)
-          #item.setText(_translate("mainWindow", group_string))
-          for col_j in range(100):
+        for row_i in range(self.result_model.rowCount()):
+          for col_j in range(self.result_model.columnCount()):
               self.ui.tableWidget.setColumnWidth(col_j, 150)
               self.ui.tableWidget.setRowHeight(row_i, 150)
           self.IsStore+=1

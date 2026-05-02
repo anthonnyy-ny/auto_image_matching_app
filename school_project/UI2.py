@@ -63,14 +63,10 @@ class Ui_mainWindow(object):
         self.tableLayout.setContentsMargins(0, 0, 0, 0)
         self.tableLayout.setSpacing(0)
 
-        self.tableWidget = QtWidgets.QTableWidget(self.tab_3)
+        self.tableWidget = QtWidgets.QTableView(self.tab_3)
         self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(15)
-        self.tableWidget.setRowCount(50)
-        self.tableWidget.setIconSize(QtCore.QSize(150, 150))
         self.tableWidget.setAlternatingRowColors(False)
         self.tableWidget.setShowGrid(False)
-        self.tableWidget.setDragEnabled(True)
         self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectItems)
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -81,10 +77,6 @@ class Ui_mainWindow(object):
         self.tableWidget.horizontalHeader().setMinimumSectionSize(120)
         self.tableWidget.verticalHeader().setMinimumSectionSize(120)
         self.tableWidget.horizontalHeader().setStretchLastSection(False)
-        for row in range(50):
-            self.tableWidget.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(str(row + 1)))
-        for col in range(15):
-            self.tableWidget.setHorizontalHeaderItem(col, QtWidgets.QTableWidgetItem(str(col + 1)))
         self.tableLayout.addWidget(self.tableWidget)
 
         self.tabWidget_2.addTab(self.tab_3, self._icon(":/background image/text-pageresult.ico"), "")
@@ -314,7 +306,7 @@ QTabBar::tab:selected {
     color: rgb(58, 39, 70);
     background: rgba(255, 250, 253, 238);
 }
-QTableWidget#tableWidget {
+QTableView#tableWidget {
     border: 1px solid rgba(255, 222, 242, 150);
     border-radius: 14px;
     background: rgba(255, 249, 253, 232);
@@ -324,7 +316,7 @@ QTableWidget#tableWidget {
     selection-background-color: rgba(255, 118, 190, 112);
     selection-color: rgb(25, 29, 45);
 }
-QTableWidget#tableWidget::item {
+QTableView#tableWidget::item {
     border-radius: 12px;
     padding: 8px;
 }
