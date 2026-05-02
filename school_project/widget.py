@@ -1,23 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
 from animated_ui import AnimatedBackgroundWidget, GlowButton
+
+ICON_PATH = Path(__file__).resolve().parent / "ui_view" / "png_icons" / "pictureresult.png"
 
 
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.setWindowModality(QtCore.Qt.NonModal)
+        Form.setWindowModality(QtCore.Qt.WindowModality.NonModal)
         Form.resize(760, 520)
         Form.setMinimumSize(QtCore.QSize(640, 460))
 
-        icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/background image/pictureresult.ico"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
-        Form.setWindowIcon(icon)
+        Form.setWindowIcon(QtGui.QIcon(str(ICON_PATH)))
 
         self.centralwidget = AnimatedBackgroundWidget(Form)
         self.centralwidget.setObjectName("centralwidget")
@@ -31,17 +28,24 @@ class Ui_Form(object):
 
         style_target.setStyleSheet("""
 QWidget#Form, QWidget#centralwidget {
-    background: transparent;
+    background-color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:1,
+        stop:0 rgb(48, 31, 70),
+        stop:0.30 rgb(126, 70, 150),
+        stop:0.62 rgb(210, 118, 176),
+        stop:0.84 rgb(242, 188, 220),
+        stop:1 rgb(255, 247, 252)
+    );
 }
 QFrame#heroFrame {
     border-radius: 16px;
-    background-color: rgba(255, 255, 255, 34);
-    border: 1px solid rgba(255, 255, 255, 74);
+    background-color: rgba(255, 245, 252, 76);
+    border: 1px solid rgba(255, 255, 255, 132);
 }
 QFrame#panelFrame {
     border-radius: 16px;
-    background-color: rgba(255, 255, 255, 218);
-    border: 1px solid rgba(255, 255, 255, 160);
+    background-color: rgba(255, 252, 254, 226);
+    border: 1px solid rgba(255, 221, 240, 150);
 }
 QLabel#label {
     color: white;
@@ -56,7 +60,7 @@ QLabel#sectionLabel {
     font: 700 11pt "Microsoft JhengHei UI";
 }
 QListWidget#listWidget {
-    border: 1px solid rgba(58, 62, 96, 45);
+    border: 1px solid rgba(96, 58, 116, 58);
     border-radius: 12px;
     background: rgba(255, 255, 255, 230);
     padding: 8px;
@@ -74,7 +78,7 @@ QListWidget::item {
     padding: 6px;
 }
 QListWidget::item:selected {
-    background: rgba(105, 214, 224, 95);
+    background: rgba(255, 142, 202, 95);
     color: rgb(23, 32, 47);
 }
 QPushButton {
@@ -84,10 +88,10 @@ QPushButton {
     padding: 8px 14px;
     font: 700 10pt "Microsoft JhengHei UI";
     color: rgb(22, 30, 48);
-    background-color: rgb(170, 255, 255);
+    background-color: rgb(176, 255, 252);
 }
 QPushButton:hover {
-    background-color: rgb(196, 255, 247);
+    background-color: rgb(255, 225, 245);
 }
 QPushButton:pressed {
     background-color: rgb(126, 225, 229);
@@ -95,10 +99,10 @@ QPushButton:pressed {
 }
 QPushButton#pushButton_3 {
     color: white;
-    background-color: rgb(43, 47, 74);
+    background-color: rgb(82, 51, 112);
 }
 QPushButton#pushButton_3:hover {
-    background-color: rgb(63, 70, 108);
+    background-color: rgb(126, 70, 150);
 }
 QPushButton#pushButton_4 {
     background-color: rgba(255, 255, 255, 210);
@@ -130,10 +134,11 @@ QProgressBar::chunk {
     background-color: qlineargradient(
         spread:pad, x1:0, y1:0.5, x2:1, y2:0.5,
         stop:0 rgba(84, 226, 226, 255),
-        stop:1 rgba(255, 110, 185, 255)
+        stop:1 rgba(255, 126, 196, 255)
     );
 }
 """)
+        self.centralwidget.start_ai_motion()
 
         self.rootLayout = QtWidgets.QVBoxLayout(layout_parent)
         self.rootLayout.setContentsMargins(28, 24, 28, 24)
@@ -172,18 +177,18 @@ QProgressBar::chunk {
         self.panelLayout.addWidget(self.previewLabel, 0, 1)
 
         self.listWidget = QtWidgets.QListWidget(self.panelFrame)
-        self.listWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.listWidget.setMovement(QtWidgets.QListView.Static)
-        self.listWidget.setViewMode(QtWidgets.QListView.ListMode)
+        self.listWidget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        self.listWidget.setMovement(QtWidgets.QListView.Movement.Static)
+        self.listWidget.setViewMode(QtWidgets.QListView.ViewMode.ListMode)
         self.listWidget.setWordWrap(False)
         self.listWidget.setObjectName("listWidget")
         self.panelLayout.addWidget(self.listWidget, 1, 0)
 
         self.previewListWidget = QtWidgets.QListWidget(self.panelFrame)
-        self.previewListWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.previewListWidget.setViewMode(QtWidgets.QListView.IconMode)
-        self.previewListWidget.setMovement(QtWidgets.QListView.Static)
-        self.previewListWidget.setResizeMode(QtWidgets.QListView.Adjust)
+        self.previewListWidget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        self.previewListWidget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
+        self.previewListWidget.setMovement(QtWidgets.QListView.Movement.Static)
+        self.previewListWidget.setResizeMode(QtWidgets.QListView.ResizeMode.Adjust)
         self.previewListWidget.setIconSize(QtCore.QSize(92, 92))
         self.previewListWidget.setGridSize(QtCore.QSize(112, 126))
         self.previewListWidget.setSpacing(8)
@@ -203,7 +208,7 @@ QProgressBar::chunk {
         self.buttonLayout.addWidget(self.comboBox)
 
         self.pushButton = GlowButton(layout_parent)
-        self.pushButton.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.pushButton.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.pushButton.setObjectName("pushButton")
         self.buttonLayout.addWidget(self.pushButton)
 
@@ -229,18 +234,11 @@ QProgressBar::chunk {
         self.progressBar.setObjectName("progressBar")
         self.rootLayout.addWidget(self.progressBar)
 
-        self._add_shadow(self.heroFrame, 24, 0.22)
-        self._add_shadow(self.panelFrame, 30, 0.18)
-
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def _add_shadow(self, widget, blur_radius, opacity):
-        shadow = QtWidgets.QGraphicsDropShadowEffect(widget)
-        shadow.setBlurRadius(blur_radius)
-        shadow.setOffset(0, 10)
-        shadow.setColor(QtGui.QColor(24, 28, 48, int(255 * opacity)))
-        widget.setGraphicsEffect(shadow)
+        return
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
@@ -274,7 +272,6 @@ QProgressBar::chunk {
         self.comboBox.addItem(_translate("Form", "快速模式"), "fast")
 
 
-import image_rc
 
 
 if __name__ == "__main__":
@@ -285,4 +282,4 @@ if __name__ == "__main__":
     ui = Ui_Form()
     ui.setupUi(Form)
     Form.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

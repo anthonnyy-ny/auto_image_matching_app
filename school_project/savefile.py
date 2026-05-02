@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
+
+ICON_PATH = Path(__file__).resolve().parent / "ui_view" / "png_icons" / "pictureresult.png"
 
 
 class Ui_Dialog(object):
@@ -9,13 +12,7 @@ class Ui_Dialog(object):
         Dialog.resize(260, 120)
         Dialog.setMinimumSize(QtCore.QSize(240, 110))
 
-        icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/background image/pictureresult.ico"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
-        Dialog.setWindowIcon(icon)
+        Dialog.setWindowIcon(QtGui.QIcon(str(ICON_PATH)))
 
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setContentsMargins(18, 14, 18, 14)
@@ -28,7 +25,7 @@ class Ui_Dialog(object):
         font.setPointSize(22)
         font.setBold(True)
         self.label.setFont(font)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label.setObjectName("label")
         self.verticalLayout.addWidget(self.label)
 
@@ -37,7 +34,7 @@ class Ui_Dialog(object):
         font.setFamily("Microsoft JhengHei UI")
         font.setPointSize(10)
         self.label_2.setFont(font)
-        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_2.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_2.setWordWrap(True)
         self.label_2.setObjectName("label_2")
         self.verticalLayout.addWidget(self.label_2)
@@ -60,4 +57,4 @@ if __name__ == "__main__":
     ui = Ui_Dialog()
     ui.setupUi(Dialog)
     Dialog.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

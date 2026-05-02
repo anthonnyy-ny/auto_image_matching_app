@@ -5,10 +5,10 @@ Created on Sun Mar 27 16:16:51 2022
 @author: User
 """
 
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt6 import QtWidgets, QtGui, QtCore
 from widget import Ui_Form
-#from PyQt5.QtGui import QImage, QPixmap
-#from PyQt5.QtWidgets import QProgressBar
+#from PyQt6.QtGui import QImage, QPixmap
+#from PyQt6.QtWidgets import QProgressBar
 import cv2
 import time
 #from concurrent.futures import thread
@@ -23,11 +23,11 @@ import numpy as np
 import math
 from math import *
 #from datetime import datetime
-from PyQt5.QtCore import Qt, QMimeData, QDate, QDateTime, QTime, QStringListModel, QSize,QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QImage, QPainter, QBrush, QPixmap, QStandardItemModel, QStandardItem, QColor, QFont
-from PyQt5.QtPrintSupport import QPageSetupDialog, QPrinter
-from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QGridLayout, \
-    QCalendarWidget, QVBoxLayout, QDateTimeEdit, QAction, QMainWindow, QTextEdit, QStatusBar, QFileDialog, QDialog, \
+from PyQt6.QtCore import Qt, QMimeData, QDate, QDateTime, QTime, QStringListModel, QSize,QThread, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon, QImage, QPainter, QBrush, QPixmap, QStandardItemModel, QStandardItem, QColor, QFont
+from PyQt6.QtPrintSupport import QPageSetupDialog, QPrinter
+from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QGridLayout, \
+    QCalendarWidget, QVBoxLayout, QDateTimeEdit, QMainWindow, QTextEdit, QStatusBar, QFileDialog, QDialog, \
     QTableView, QMessageBox, QListView, QListWidget, QHBoxLayout, QTableWidget, QTableWidgetItem, QAbstractItemView
 
 from controller2 import MainWindow_controller2
@@ -403,7 +403,7 @@ def read_cv_image(name):
             qt_image = pixmap.toImage()
     if qt_image.isNull():
         return None
-    qt_image = qt_image.convertToFormat(QImage.Format_RGB888)
+    qt_image = qt_image.convertToFormat(QImage.Format.Format_RGB888)
     width = qt_image.width()
     height = qt_image.height()
     bytes_per_line = qt_image.bytesPerLine()
@@ -832,7 +832,7 @@ class Form_controller(QtWidgets.QMainWindow):
             pixmap = QPixmap(str(image_path))
             if pixmap.isNull():
                 continue
-            icon = QIcon(pixmap.scaled(92, 92, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            icon = QIcon(pixmap.scaled(92, 92, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
             item = QtWidgets.QListWidgetItem(icon, image_path.name)
             item.setToolTip(str(image_path))
             self.ui.previewListWidget.addItem(item)

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
+
+ICON_PATH = Path(__file__).resolve().parent / "ui_view" / "png_icons" / "pictureresult.png"
 
 
 class Ui_SplashScreen(object):
@@ -9,13 +12,7 @@ class Ui_SplashScreen(object):
         SplashScreen.resize(460, 300)
         SplashScreen.setMinimumSize(QtCore.QSize(420, 280))
 
-        icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/background image/pictureresult.ico"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
-        SplashScreen.setWindowIcon(icon)
+        SplashScreen.setWindowIcon(QtGui.QIcon(str(ICON_PATH)))
 
         self.centralwidget = QtWidgets.QWidget(SplashScreen)
         self.centralwidget.setObjectName("centralwidget")
@@ -32,8 +29,8 @@ QFrame {
     border-radius: 10px;
 }
 """)
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.frame.setObjectName("frame")
 
         self.frameLayout = QtWidgets.QVBoxLayout(self.frame)
@@ -43,7 +40,7 @@ QFrame {
 
         self.label_tittle = QtWidgets.QLabel(self.frame)
         self.label_tittle.setStyleSheet("color: rgb(254, 121, 199);")
-        self.label_tittle.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_tittle.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_tittle.setWordWrap(True)
         self.label_tittle.setObjectName("label_tittle")
         self.frameLayout.addWidget(self.label_tittle)
@@ -54,7 +51,7 @@ QFrame {
         font.setPointSize(14)
         self.label_description.setFont(font)
         self.label_description.setStyleSheet("color: rgb(190, 198, 232);")
-        self.label_description.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_description.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_description.setObjectName("label_description")
         self.frameLayout.addWidget(self.label_description)
 
@@ -86,7 +83,7 @@ QProgressBar::chunk {
         font.setPointSize(12)
         self.label_loading.setFont(font)
         self.label_loading.setStyleSheet("color: rgb(190, 198, 232);")
-        self.label_loading.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_loading.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_loading.setObjectName("label_loading")
         self.frameLayout.addWidget(self.label_loading)
 
@@ -104,7 +101,6 @@ QProgressBar::chunk {
         self.label_loading.setText(_translate("SplashScreen", "載入中....."))
 
 
-import image_rc
 
 
 if __name__ == "__main__":
@@ -115,4 +111,4 @@ if __name__ == "__main__":
     ui = Ui_SplashScreen()
     ui.setupUi(SplashScreen)
     SplashScreen.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

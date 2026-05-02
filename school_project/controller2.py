@@ -5,9 +5,9 @@ Created on Sun Mar 27 16:20:56 2022
 @author: User
 """
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QFileDialog
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtWidgets import QFileDialog
 import cv2
 import csv
 import json
@@ -29,12 +29,12 @@ from math import *
 from datetime import datetime
 
 
-from PyQt5 import QtPrintSupport, QtGui
-from PyQt5.QtCore import Qt, QMimeData, QDate, QDateTime, QTime, QStringListModel, QSize
-from PyQt5.QtGui import QIcon, QPainter, QBrush, QPixmap, QStandardItemModel, QStandardItem, QColor, QFont
-from PyQt5.QtPrintSupport import QPageSetupDialog, QPrinter, QPrintDialog
-from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QGridLayout, \
-    QCalendarWidget, QVBoxLayout, QDateTimeEdit, QAction, QMainWindow, QTextEdit, QStatusBar, QFileDialog, QDialog, \
+from PyQt6 import QtPrintSupport, QtGui
+from PyQt6.QtCore import Qt, QMimeData, QDate, QDateTime, QTime, QStringListModel, QSize
+from PyQt6.QtGui import QAction, QIcon, QPainter, QBrush, QPixmap, QStandardItemModel, QStandardItem, QColor, QFont
+from PyQt6.QtPrintSupport import QPageSetupDialog, QPrinter, QPrintDialog
+from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabel, QLineEdit, QPushButton, QGridLayout, \
+    QCalendarWidget, QVBoxLayout, QDateTimeEdit, QMainWindow, QTextEdit, QStatusBar, QFileDialog, QDialog, \
     QTableView, QMessageBox, QListView, QListWidget, QHBoxLayout, QTableWidget, QTableWidgetItem, QAbstractItemView
     
 from UI2 import Ui_mainWindow
@@ -243,7 +243,7 @@ def read_cv_image(name):
             qt_image = pixmap.toImage()
     if qt_image.isNull():
         return None
-    qt_image = qt_image.convertToFormat(QImage.Format_RGB888)
+    qt_image = qt_image.convertToFormat(QImage.Format.Format_RGB888)
     width = qt_image.width()
     height = qt_image.height()
     bytes_per_line = qt_image.bytesPerLine()
@@ -595,7 +595,7 @@ class ImagePreviewDialog(QtWidgets.QDialog):
         layout.addWidget(self.meta)
 
         self.imageLabel = QtWidgets.QLabel()
-        self.imageLabel.setAlignment(Qt.AlignCenter)
+        self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.imageLabel.setStyleSheet("background: rgb(30, 32, 48); border-radius: 10px;")
         layout.addWidget(self.imageLabel, 1)
 
@@ -620,7 +620,7 @@ class ImagePreviewDialog(QtWidgets.QDialog):
             self.imageLabel.setText("无法预览图片")
             return
         target = self.imageLabel.size() - QtCore.QSize(24, 24)
-        self.imageLabel.setPixmap(pixmap.scaled(target, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.imageLabel.setPixmap(pixmap.scaled(target, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def open_folder(self):
         folder = os.path.dirname(self.image_path)
@@ -733,8 +733,8 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             for column, buf_img in enumerate(group.same):
                 item = QtWidgets.QTableWidgetItem(QIcon(buf_img.name), buf_img.filename)
                 item.setToolTip(buf_img.name)
-                item.setData(Qt.UserRole, buf_img.name)
-                item.setData(Qt.UserRole + 1, group_name)
+                item.setData(Qt.ItemDataRole.UserRole, buf_img.name)
+                item.setData(Qt.ItemDataRole.UserRole.value + 1, group_name)
                 self.ui.tableWidget.setItem(row, column, item)
 
         if group_count == 0:
@@ -749,16 +749,16 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         self._table_fade.setDuration(520)
         self._table_fade.setStartValue(0.0)
         self._table_fade.setEndValue(1.0)
-        self._table_fade.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        self._table_fade.setEasingCurve(QtCore.QEasingCurve.Type.OutCubic)
         self._table_fade.start()
 
     def preview_item(self, item):
-        image_path = item.data(Qt.UserRole)
-        group_name = item.data(Qt.UserRole + 1) or ""
+        image_path = item.data(Qt.ItemDataRole.UserRole)
+        group_name = item.data(Qt.ItemDataRole.UserRole.value + 1) or ""
         if not image_path:
             return
         dialog = ImagePreviewDialog(image_path, item.text(), group_name, self)
-        dialog.exec_()
+        dialog.exec()
 
     def addrow(self):
         if(self.IsStore==1):
@@ -924,7 +924,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         Dialog = QtWidgets.QDialog()
         ui = Ui_Dialog()
         ui.setupUi(Dialog)
-        Dialog.exec_()
+        Dialog.exec()
     
     def readFile(self):
       

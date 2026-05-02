@@ -19,11 +19,11 @@ from splash_screen import Ui_SplashScreen
 
 import sys
 import class_list
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import *
-#from PyQt5.QtWidgets import QProgressBar
-from PyQt5.QtGui import *
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import *
+#from PyQt6.QtWidgets import QProgressBar
+from PyQt6.QtGui import *
 #import timer
 #import platform
 
@@ -48,8 +48,8 @@ class splash_screen_controller(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.progress()
         self.IsStore=0
-        self.setWindowFlag(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
        ## QTIMER ==> START
         self.timer = QtCore.QTimer()
@@ -102,12 +102,10 @@ class splash_screen_controller(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QtWidgets.QApplication(sys.argv)
     ui = splash_screen_controller()
    # ui.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
     
     #from controller2 import MainWindow_controller2
 
@@ -125,12 +123,12 @@ if __name__ == "__main__":
   #  app2 = QtWidgets.QApplication(sys.argv)
   #  ui = splash_screen_controller()
 #    ui.show()
-  #  sys.exit(app2.exec_())
+  #  sys.exit(app2.exec())
    # import sys
    # app = QtWidgets.QApplication(sys.argv)
     #window = Form_controller()
    # window.show()
-  #  sys.exit(app.exec_())
+  #  sys.exit(app.exec())
 
     
 #if __name__ == '__main__':

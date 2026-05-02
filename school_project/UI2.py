@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 import class_list
 from animated_ui import AnimatedBackgroundWidget, GlowButton
@@ -21,6 +21,7 @@ class Ui_mainWindow(object):
 
         self.centralwidget = AnimatedBackgroundWidget(mainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        self.centralwidget.start_ai_motion()
         self.rootLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.rootLayout.setContentsMargins(22, 18, 22, 18)
         self.rootLayout.setSpacing(14)
@@ -70,9 +71,9 @@ class Ui_mainWindow(object):
         self.tableWidget.setAlternatingRowColors(False)
         self.tableWidget.setShowGrid(False)
         self.tableWidget.setDragEnabled(True)
-        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
-        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectItems)
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tableWidget.horizontalHeader().setVisible(True)
         self.tableWidget.verticalHeader().setVisible(True)
         self.tableWidget.horizontalHeader().setDefaultSectionSize(160)
@@ -118,13 +119,13 @@ class Ui_mainWindow(object):
         self.toolBar = QtWidgets.QToolBar(mainWindow)
         self.toolBar.setObjectName("toolBar")
         self.toolBar.setIconSize(QtCore.QSize(24, 24))
-        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.toolBar.setMovable(False)
-        mainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
+        mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.toolBar)
 
         self.dockWidget = QtWidgets.QDockWidget(mainWindow)
         self.dockWidget.setObjectName("dockWidget")
-        self.dockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetMovable | QtWidgets.QDockWidget.DockWidgetFloatable)
+        self.dockWidget.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetMovable | QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetFloatable)
         self.dockWidgetContents = QtWidgets.QWidget()
         self.dockWidgetContents.setObjectName("dockWidgetContents")
         self.sideLayout = QtWidgets.QVBoxLayout(self.dockWidgetContents)
@@ -164,16 +165,12 @@ class Ui_mainWindow(object):
         self.sideLayout.addWidget(self.pushButton_12)
         self.sideLayout.addStretch(1)
         self.dockWidget.setWidget(self.dockWidgetContents)
-        mainWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dockWidget)
+        mainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget)
 
         self._create_actions(mainWindow)
         self._wire_menus()
-        self._add_shadow(self.headerFrame, 28, 0.24)
-        self._add_shadow(self.contentFrame, 34, 0.20)
-
         self.retranslateUi(mainWindow)
         self.tabWidget_2.setCurrentIndex(0)
-        self._start_intro_animation()
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def _icon(self, path):
@@ -190,65 +187,37 @@ class Ui_mainWindow(object):
         return button
 
     def _add_shadow(self, widget, blur_radius, opacity):
-        shadow = QtWidgets.QGraphicsDropShadowEffect(widget)
-        shadow.setBlurRadius(blur_radius)
-        shadow.setOffset(0, 12)
-        shadow.setColor(QtGui.QColor(12, 16, 30, int(255 * opacity)))
-        widget.setGraphicsEffect(shadow)
+        return
 
     def _start_intro_animation(self):
-        self._intro_group = QtCore.QParallelAnimationGroup(self.centralwidget)
-        for widget, delay, offset in (
-            (self.headerFrame, 0, -24),
-            (self.contentFrame, 90, 32),
-        ):
-            opacity = QtWidgets.QGraphicsOpacityEffect(widget)
-            widget.setGraphicsEffect(opacity)
-            fade = QtCore.QPropertyAnimation(opacity, b"opacity", self.centralwidget)
-            fade.setDuration(420)
-            fade.setStartValue(0.0)
-            fade.setEndValue(1.0)
-            fade.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-            fade.setLoopCount(1)
-
-            start_pos = widget.pos() + QtCore.QPoint(0, offset)
-            end_pos = widget.pos()
-            widget.move(start_pos)
-            move = QtCore.QPropertyAnimation(widget, b"pos", self.centralwidget)
-            move.setDuration(520 + delay)
-            move.setStartValue(start_pos)
-            move.setEndValue(end_pos)
-            move.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-            self._intro_group.addAnimation(fade)
-            self._intro_group.addAnimation(move)
-        self._intro_group.start()
+        return
 
     def _create_actions(self, mainWindow):
-        self.action_F1 = QtWidgets.QAction(mainWindow)
-        self.action_about = QtWidgets.QAction(mainWindow)
-        self.action_4 = QtWidgets.QAction(self._icon(":/background image/exitresult.ico"), "", mainWindow)
-        self.actionundo_CTRL_Z = QtWidgets.QAction(self._icon(":/background image/undoresult.ico"), "", mainWindow)
-        self.actionRedo_Ctrl_Y = QtWidgets.QAction(self._icon(":/background image/redoresult.ico"), "", mainWindow)
-        self.actionCut = QtWidgets.QAction(self._icon(":/background image/cutresult.ico"), "", mainWindow)
-        self.actionCopy = QtWidgets.QAction(self._icon(":/background image/copyresult.ico"), "", mainWindow)
-        self.actionPaste = QtWidgets.QAction(self._icon(":/background image/pasteresult.ico"), "", mainWindow)
-        self.actionSelect_All_Ctrl_A = QtWidgets.QAction(mainWindow)
-        self.action = QtWidgets.QAction(self._icon(":/background image/minimizeresult.ico"), "", mainWindow)
-        self.action_3 = QtWidgets.QAction(mainWindow)
-        self.action_7 = QtWidgets.QAction(mainWindow)
-        self.action_8 = QtWidgets.QAction(self._icon(":/background image/gearresult.ico"), "", mainWindow)
-        self.action_10 = QtWidgets.QAction(self._icon(":/background image/folderresult.ico"), "", mainWindow)
-        self.action_11 = QtWidgets.QAction(self._icon(":/background image/disketteresult.ico"), "", mainWindow)
-        self.action_12 = QtWidgets.QAction(mainWindow)
-        self.action_13 = QtWidgets.QAction(mainWindow)
-        self.action_19 = QtWidgets.QAction(mainWindow)
-        self.action_2 = QtWidgets.QAction(mainWindow)
-        self.action_5 = QtWidgets.QAction(self._icon(":/background image/add-fileresult.ico"), "", mainWindow)
-        self.action_6 = QtWidgets.QAction(self._icon(":/background image/playresult.ico"), "", mainWindow)
-        self.action_9 = QtWidgets.QAction(self._icon(":/background image/searchresult.ico"), "", mainWindow)
-        self.action_14 = QtWidgets.QAction(mainWindow)
-        self.action_15 = QtWidgets.QAction(self._icon(":/background image/full-screenresult.ico"), "", mainWindow)
-        self.action_17 = QtWidgets.QAction(mainWindow)
+        self.action_F1 = QtGui.QAction(mainWindow)
+        self.action_about = QtGui.QAction(mainWindow)
+        self.action_4 = QtGui.QAction(self._icon(":/background image/exitresult.ico"), "", mainWindow)
+        self.actionundo_CTRL_Z = QtGui.QAction(self._icon(":/background image/undoresult.ico"), "", mainWindow)
+        self.actionRedo_Ctrl_Y = QtGui.QAction(self._icon(":/background image/redoresult.ico"), "", mainWindow)
+        self.actionCut = QtGui.QAction(self._icon(":/background image/cutresult.ico"), "", mainWindow)
+        self.actionCopy = QtGui.QAction(self._icon(":/background image/copyresult.ico"), "", mainWindow)
+        self.actionPaste = QtGui.QAction(self._icon(":/background image/pasteresult.ico"), "", mainWindow)
+        self.actionSelect_All_Ctrl_A = QtGui.QAction(mainWindow)
+        self.action = QtGui.QAction(self._icon(":/background image/minimizeresult.ico"), "", mainWindow)
+        self.action_3 = QtGui.QAction(mainWindow)
+        self.action_7 = QtGui.QAction(mainWindow)
+        self.action_8 = QtGui.QAction(self._icon(":/background image/gearresult.ico"), "", mainWindow)
+        self.action_10 = QtGui.QAction(self._icon(":/background image/folderresult.ico"), "", mainWindow)
+        self.action_11 = QtGui.QAction(self._icon(":/background image/disketteresult.ico"), "", mainWindow)
+        self.action_12 = QtGui.QAction(mainWindow)
+        self.action_13 = QtGui.QAction(mainWindow)
+        self.action_19 = QtGui.QAction(mainWindow)
+        self.action_2 = QtGui.QAction(mainWindow)
+        self.action_5 = QtGui.QAction(self._icon(":/background image/add-fileresult.ico"), "", mainWindow)
+        self.action_6 = QtGui.QAction(self._icon(":/background image/playresult.ico"), "", mainWindow)
+        self.action_9 = QtGui.QAction(self._icon(":/background image/searchresult.ico"), "", mainWindow)
+        self.action_14 = QtGui.QAction(mainWindow)
+        self.action_15 = QtGui.QAction(self._icon(":/background image/full-screenresult.ico"), "", mainWindow)
+        self.action_17 = QtGui.QAction(mainWindow)
         self.action_17.setCheckable(True)
 
     def _wire_menus(self):
@@ -292,26 +261,38 @@ class Ui_mainWindow(object):
     def _style_sheet(self):
         return """
 QWidget#centralwidget {
-    background: transparent;
+    background-color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:1,
+        stop:0 rgb(48, 31, 70),
+        stop:0.30 rgb(126, 70, 150),
+        stop:0.62 rgb(210, 118, 176),
+        stop:0.84 rgb(242, 188, 220),
+        stop:1 rgb(255, 247, 252)
+    );
 }
-QFrame#headerFrame, QFrame#contentFrame {
+QFrame#headerFrame {
     border-radius: 18px;
-    background-color: rgba(255, 255, 255, 38);
-    border: 1px solid rgba(255, 255, 255, 88);
+    background-color: rgba(154, 76, 142, 138);
+    border: 1px solid rgba(255, 232, 248, 168);
+}
+QFrame#contentFrame {
+    border-radius: 18px;
+    background-color: rgba(255, 238, 249, 112);
+    border: 1px solid rgba(255, 255, 255, 150);
 }
 QLabel#titleLabel {
     color: white;
     font: 800 23pt "Microsoft JhengHei UI";
 }
 QLabel#subtitleLabel {
-    color: rgba(255, 255, 255, 215);
+    color: rgba(255, 248, 253, 226);
     font: 10pt "Microsoft JhengHei UI";
 }
 QLineEdit#lineEdit {
     min-height: 38px;
-    border: 1px solid rgba(255, 255, 255, 130);
+    border: 1px solid rgba(255, 210, 236, 190);
     border-radius: 12px;
-    background: rgba(255, 255, 255, 220);
+    background: rgba(255, 251, 254, 235);
     padding: 0 12px;
     color: rgb(35, 38, 58);
     font: 10pt "Microsoft JhengHei UI";
@@ -325,22 +306,22 @@ QTabBar::tab {
     min-height: 34px;
     margin-right: 8px;
     border-radius: 10px;
-    color: rgba(255, 255, 255, 210);
-    background: rgba(255, 255, 255, 36);
+    color: rgba(255, 255, 255, 226);
+    background: rgba(95, 54, 118, 118);
     font: 700 10pt "Microsoft JhengHei UI";
 }
 QTabBar::tab:selected {
-    color: rgb(35, 38, 58);
-    background: rgba(255, 255, 255, 225);
+    color: rgb(58, 39, 70);
+    background: rgba(255, 250, 253, 238);
 }
 QTableWidget#tableWidget {
-    border: 0;
+    border: 1px solid rgba(255, 222, 242, 150);
     border-radius: 14px;
-    background: rgba(255, 255, 255, 226);
+    background: rgba(255, 249, 253, 232);
     gridline-color: rgba(255, 255, 255, 0);
     color: rgb(32, 35, 54);
     font: 10pt "Microsoft JhengHei UI";
-    selection-background-color: rgba(85, 218, 226, 110);
+    selection-background-color: rgba(255, 118, 190, 112);
     selection-color: rgb(25, 29, 45);
 }
 QTableWidget#tableWidget::item {
@@ -352,8 +333,8 @@ QHeaderView::section {
     border-radius: 8px;
     padding: 6px;
     margin: 2px;
-    color: rgb(55, 59, 86);
-    background: rgba(255, 255, 255, 180);
+    color: rgb(65, 43, 80);
+    background: rgba(255, 241, 249, 218);
     font: 700 9pt "Microsoft JhengHei UI";
 }
 QDockWidget {
@@ -363,7 +344,7 @@ QDockWidget {
     font: 700 10pt "Microsoft JhengHei UI";
 }
 QWidget#dockWidgetContents {
-    background-color: rgba(31, 34, 57, 236);
+    background-color: rgba(46, 31, 70, 236);
 }
 QLabel#sideTitle {
     color: white;
@@ -375,11 +356,11 @@ QPushButton {
     border-radius: 11px;
     padding: 7px 10px;
     color: rgb(26, 31, 48);
-    background-color: rgb(170, 255, 255);
+    background-color: rgb(176, 255, 252);
     font: 700 10pt "Microsoft JhengHei UI";
 }
 QPushButton:hover {
-    background-color: rgb(203, 255, 250);
+    background-color: rgb(255, 225, 245);
 }
 QPushButton:pressed {
     background-color: rgb(126, 225, 229);
@@ -387,7 +368,7 @@ QPushButton:pressed {
 }
 QMenuBar {
     color: rgb(245, 247, 255);
-    background-color: rgb(31, 34, 57);
+    background-color: rgb(46, 31, 70);
     font: 10pt "Microsoft JhengHei UI";
 }
 QMenuBar::item:selected {
@@ -404,10 +385,10 @@ QMenu::item {
     border-radius: 7px;
 }
 QMenu::item:selected {
-    background: rgba(105, 214, 224, 90);
+    background: rgba(255, 142, 202, 96);
 }
 QToolBar {
-    background: rgb(31, 34, 57);
+    background: rgb(46, 31, 70);
     border: 0;
     spacing: 8px;
     padding: 6px;
@@ -416,14 +397,14 @@ QToolButton {
     border: 0;
     border-radius: 9px;
     padding: 6px;
-    background: rgba(255, 255, 255, 28);
+    background: rgba(255, 255, 255, 38);
 }
 QToolButton:hover {
-    background: rgba(255, 255, 255, 68);
+    background: rgba(255, 174, 220, 102);
 }
 QStatusBar {
     color: rgb(245, 247, 255);
-    background: rgb(31, 34, 57);
+    background: rgb(46, 31, 70);
 }
 QScrollBar:vertical, QScrollBar:horizontal {
     background: transparent;
@@ -431,7 +412,7 @@ QScrollBar:vertical, QScrollBar:horizontal {
     margin: 2px;
 }
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-    background: rgba(43, 47, 74, 125);
+    background: rgba(172, 111, 188, 160);
     border-radius: 6px;
     min-height: 28px;
     min-width: 28px;
@@ -513,7 +494,6 @@ QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
         self.action_10.setIconText(_translate("mainWindow", "打開資料夾"))
 
 
-import image_rc
 
 
 if __name__ == "__main__":
@@ -524,4 +504,4 @@ if __name__ == "__main__":
     ui = Ui_mainWindow()
     ui.setupUi(mainWindow)
     mainWindow.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
