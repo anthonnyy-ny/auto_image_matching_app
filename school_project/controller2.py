@@ -46,6 +46,69 @@ from app_paths import debug_output_dir, default_open_dir, downloads_dir
 from image_utils import iter_image_files, jpg_filename
 
 
+class SaveGroupsWorker(QtCore.QThread):
+    progress = QtCore.pyqtSignal(int, int, str)
+    finished = QtCore.pyqtSignal(str, int, int, list)
+    failed = QtCore.pyqtSignal(str)
+
+    def __init__(self, groups_snapshot, output_root, parent=None):
+        super().__init__(parent)
+        self.groups_snapshot = groups_snapshot
+        self.output_root = output_root
+
+    def run(self):
+        try:
+            os.makedirs(self.output_root, exist_ok=True)
+            total = sum(len(group["images"]) for group in self.groups_snapshot)
+            done = 0
+            saved = 0
+            errors = []
+            base_mtime = time.time()
+            manifest_rows = []
+
+            for group_index, group in enumerate(self.groups_snapshot, start=1):
+                group_name = group["name"]
+                group_dir = os.path.join(self.output_root, group_name)
+                os.makedirs(group_dir, exist_ok=True)
+
+                for image in group["images"]:
+                    try:
+                        store_img = read_cv_image(image["source_path"])
+                        if store_img is None:
+                            raise ValueError("Image could not be read")
+                        output_path = os.path.join(group_dir, transfer_filename(image["filename"]))
+                        if not cv2.imwrite(output_path, store_img):
+                            raise ValueError("Image could not be written")
+                        manifest_rows.append({
+                            "group": group_name,
+                            "filename": image["filename"],
+                            "source_path": image["source_path"],
+                            "saved_path": output_path,
+                        })
+                        saved += 1
+                    except Exception as exc:
+                        errors.append(group_name + " / " + image["filename"] + ": " + str(exc))
+                    finally:
+                        done += 1
+                        self.progress.emit(done, total, group_name)
+
+                group_mtime = base_mtime - group_index
+                os.utime(group_dir, (group_mtime, group_mtime))
+
+            manifest_csv = os.path.join(self.output_root, "manifest.csv")
+            with open(manifest_csv, "w", newline="", encoding="utf-8-sig") as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=["group", "filename", "source_path", "saved_path"])
+                writer.writeheader()
+                writer.writerows(manifest_rows)
+            manifest_json = os.path.join(self.output_root, "manifest.json")
+            with open(manifest_json, "w", encoding="utf-8") as json_file:
+                json.dump(manifest_rows, json_file, ensure_ascii=False, indent=2)
+
+            self.finished.emit(self.output_root, saved, total, errors)
+        except Exception as exc:
+            self.failed.emit(str(exc))
+
+
 
 
 def new_resize_img(img, new_scale):                 #check
@@ -640,6 +703,11 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         self.thumbnail_delegate = ThumbnailDelegate(self.thumbnail_cache, self.ui.tableWidget)
         self.ui.tableWidget.setModel(self.result_model)
         self.ui.tableWidget.setItemDelegate(self.thumbnail_delegate)
+        self.save_worker = None
+        self.save_progress = QtWidgets.QProgressBar(self)
+        self.save_progress.setMaximumWidth(220)
+        self.save_progress.setVisible(False)
+        self.ui.statusBar.addPermanentWidget(self.save_progress)
         self.setup_control()
         self.IsStore=0
         
@@ -673,6 +741,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.pushButton_11.clicked.connect(self.hideHorizontallHeader)
        self.ui.pushButton_12.clicked.connect(self.showHorizontallHeader)
        self.ui.tableWidget.doubleClicked.connect(self.preview_item)
+       self.ui.lineEdit.textChanged.connect(self.filter_results)
 
        self.populate_results()
        return
@@ -688,6 +757,17 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             self.ui.tableWidget.setRowHeight(row, 165)
         self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups, lazy thumbnails enabled", 5000)
         self.animate_results()
+
+    def filter_results(self, text):
+        self.result_model.set_filter_text(text)
+        for column in range(self.result_model.columnCount()):
+            self.ui.tableWidget.setColumnWidth(column, 165)
+        for row in range(self.result_model.rowCount()):
+            self.ui.tableWidget.setRowHeight(row, 165)
+        shown = len(self.result_model.visible_rows)
+        total = len(self.result_model.groups)
+        if text.strip():
+            self.ui.statusBar.showMessage("Showing " + str(shown) + " of " + str(total) + " groups", 2500)
 
     def animate_results(self):
         self.ui.tableWidget.viewport().update()
@@ -799,67 +879,77 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         if(self.IsStore>=1):
             self.IsStore=0
             return
+        if self.save_worker is not None and self.save_worker.isRunning():
+            QMessageBox.information(self, "保存中", "分類結果正在背景保存，請稍候。")
+            return
         if not class_list.CF_list:
             QMessageBox.warning(self, "提示", "目前沒有分組結果可以保存。")
             return
-        print("\nstart store img\n")
+
         now = datetime.now()
         current_time = now.strftime(" %m %d %Y %H %M %S")
+        download_dir = os.path.join(str(downloads_dir()), "Classification" + current_time)
+        groups_snapshot = self._save_snapshot()
+        total = sum(len(group["images"]) for group in groups_snapshot)
+        if total == 0:
+            QMessageBox.warning(self, "提示", "目前沒有可保存的圖片。")
+            return
 
-        download_dir=os.path.join(str(downloads_dir()), "Classification" + current_time)
-        
-        #C:/Users/User/Downloads
-        os.makedirs(download_dir, exist_ok=True)
+        self.save_progress.setRange(0, total)
+        self.save_progress.setValue(0)
+        self.save_progress.setVisible(True)
+        self.ui.action_11.setEnabled(False)
+        self.ui.statusBar.showMessage("Saving 0/" + str(total) + " images...")
 
-        
-       
+        self.save_worker = SaveGroupsWorker(groups_snapshot, download_dir, self)
+        self.save_worker.progress.connect(self._save_progress)
+        self.save_worker.finished.connect(self._save_finished)
+        self.save_worker.failed.connect(self._save_failed)
+        self.save_worker.start()
+
+    def _save_snapshot(self):
+        groups_snapshot = []
         group_count = len(class_list.CF_list)
         group_number_width = max(2, len(str(group_count)))
-
-        base_mtime = time.time()
-        manifest_rows = []
-
         for group_index, group in enumerate(class_list.CF_list, start=1):
             group_name = "Group" + str(group_index).zfill(group_number_width)
-            buf_dir=os.path.join(download_dir, group_name)
-            #print("\nreate dir : ",buf_dir," ====>   \n")
-            os.makedirs(buf_dir, exist_ok=True)
+            images = []
             for buf_img in group.same:
-                store_img=read_cv_image(buf_img.name)
-                if store_img is None:
-                    print("skip save image:", buf_img.name)
-                    continue
-                #print("store img shape : ",store_img.shape)
-                buf_filename=transfer_filename(buf_img.filename)
-                #print("store img filename : ",buf_filename)
-                #D:/store_img
-                output_path = os.path.join(buf_dir, str(buf_filename))
-                cv2.imwrite(output_path, store_img)
-                manifest_rows.append({
-                    "group": group_name,
-                    "filename": buf_img.filename,
+                images.append({
                     "source_path": buf_img.name,
-                    "saved_path": output_path,
+                    "filename": buf_img.filename,
                 })
-            # Windows Explorer often sorts Downloads by modified time descending.
-            # Make Group01 newest, Group02 next, etc. so the saved folders stay ordered.
-            group_mtime = base_mtime - group_index
-            os.utime(buf_dir, (group_mtime, group_mtime))
-        manifest_csv = os.path.join(download_dir, "manifest.csv")
-        with open(manifest_csv, "w", newline="", encoding="utf-8-sig") as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=["group", "filename", "source_path", "saved_path"])
-            writer.writeheader()
-            writer.writerows(manifest_rows)
-        manifest_json = os.path.join(download_dir, "manifest.json")
-        with open(manifest_json, "w", encoding="utf-8") as json_file:
-            json.dump(manifest_rows, json_file, ensure_ascii=False, indent=2)
-        print("store img end")
-        self.IsStore+=1
-       
-        Dialog = QtWidgets.QDialog()
-        ui = Ui_Dialog()
-        ui.setupUi(Dialog)
-        Dialog.exec()
+            groups_snapshot.append({"name": group_name, "images": images})
+        return groups_snapshot
+
+    def _save_progress(self, done, total, group_name):
+        self.save_progress.setMaximum(total)
+        self.save_progress.setValue(done)
+        self.ui.statusBar.showMessage("Saving " + str(done) + "/" + str(total) + " images to " + group_name + "...")
+
+    def _save_finished(self, output_root, saved, total, errors):
+        self.save_progress.setVisible(False)
+        self.ui.action_11.setEnabled(True)
+        self.save_worker = None
+        message = "保存完成：" + str(saved) + "/" + str(total) + " 張圖片\n" + output_root
+        if errors:
+            message += "\n\n略過 " + str(len(errors)) + " 張：\n" + "\n".join(errors[:8])
+        self.ui.statusBar.showMessage("Saved to " + output_root, 8000)
+        reply = QMessageBox.information(
+            self,
+            "保存完成",
+            message + "\n\n是否打開保存資料夾？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes and hasattr(os, "startfile"):
+            os.startfile(output_root)
+
+    def _save_failed(self, message):
+        self.save_progress.setVisible(False)
+        self.ui.action_11.setEnabled(True)
+        self.save_worker = None
+        self.ui.statusBar.showMessage("Save failed", 5000)
+        QMessageBox.warning(self, "保存失敗", message)
     
     def readFile(self):
       

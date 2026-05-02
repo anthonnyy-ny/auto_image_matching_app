@@ -47,6 +47,8 @@ class ResultTableModel(QtCore.QAbstractTableModel):
     def __init__(self, groups=None, parent=None):
         super().__init__(parent)
         self.groups = []
+        self.visible_rows = []
+        self.filter_text = ""
         self.extra_rows = 0
         self.extra_columns = 0
         self.group_number_width = 2
@@ -56,19 +58,43 @@ class ResultTableModel(QtCore.QAbstractTableModel):
         self.beginResetModel()
         self.groups = list(groups)
         self.group_number_width = max(2, len(str(len(self.groups))))
+        self.visible_rows = self._matching_rows()
         self.extra_rows = 0
         self.extra_columns = 0
         self.endResetModel()
 
+    def set_filter_text(self, text):
+        normalized = (text or "").strip().lower()
+        if normalized == self.filter_text:
+            return
+        self.beginResetModel()
+        self.filter_text = normalized
+        self.visible_rows = self._matching_rows()
+        self.extra_rows = 0
+        self.extra_columns = 0
+        self.endResetModel()
+
+    def _matching_rows(self):
+        if not self.filter_text:
+            return list(range(len(self.groups)))
+        rows = []
+        for row, group in enumerate(self.groups):
+            group_name = self.group_name(row).lower()
+            filenames = " ".join(getattr(image, "filename", "") for image in group.same).lower()
+            if self.filter_text in group_name or self.filter_text in filenames:
+                rows.append(row)
+        return rows
+
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
-        return max(1, len(self.groups) + self.extra_rows)
+        return max(1, len(self.visible_rows) + self.extra_rows)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
-        max_group_size = max((len(group.same) for group in self.groups), default=1)
+        visible_groups = [self.groups[row] for row in self.visible_rows]
+        max_group_size = max((len(group.same) for group in visible_groups), default=1)
         return max(1, max_group_size + self.extra_columns)
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
@@ -82,7 +108,8 @@ class ResultTableModel(QtCore.QAbstractTableModel):
         if role == self.ImagePathRole:
             return image.name
         if role == self.GroupNameRole:
-            return self.group_name(index.row())
+            source_row = self.source_row(index.row())
+            return self.group_name(source_row) if source_row is not None else ""
         if role == QtCore.Qt.ItemDataRole.ToolTipRole:
             return image.name
         return None
@@ -92,12 +119,13 @@ class ResultTableModel(QtCore.QAbstractTableModel):
             return None
         if orientation == QtCore.Qt.Orientation.Horizontal:
             return str(section + 1)
-        if not self.groups:
+        if not self.visible_rows:
             return "No result" if section == 0 else ""
-        if section >= len(self.groups):
+        if section >= len(self.visible_rows):
             return ""
-        group = self.groups[section]
-        return self.group_name(section) + " (" + str(group.img_count) + ")"
+        source_row = self.visible_rows[section]
+        group = self.groups[source_row]
+        return self.group_name(source_row) + " (" + str(group.img_count) + ")"
 
     def flags(self, index):
         if not index.isValid():
@@ -108,12 +136,17 @@ class ResultTableModel(QtCore.QAbstractTableModel):
         return flags
 
     def image_at(self, row, column):
-        if row < 0 or column < 0 or row >= len(self.groups):
+        if row < 0 or column < 0 or row >= len(self.visible_rows):
             return None
-        group = self.groups[row]
+        group = self.groups[self.visible_rows[row]]
         if column >= len(group.same):
             return None
         return group.same[column]
+
+    def source_row(self, row):
+        if row < 0 or row >= len(self.visible_rows):
+            return None
+        return self.visible_rows[row]
 
     def group_name(self, row):
         return "Group" + str(row + 1).zfill(self.group_number_width)
