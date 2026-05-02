@@ -10,6 +10,18 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from app_paths import thumbnail_cache_dir
 
 
+class ManualGroup:
+    def __init__(self, images=None):
+        self.same = list(images or [])
+        self.img_count = len(self.same)
+
+
+class ProjectImage:
+    def __init__(self, name, filename):
+        self.name = name
+        self.filename = filename
+
+
 class ThumbnailWorkerSignals(QtCore.QObject):
     ready = QtCore.pyqtSignal(str, str)
     failed = QtCore.pyqtSignal(str)
@@ -232,6 +244,92 @@ class ResultTableModel(QtCore.QAbstractTableModel):
 
     def group_name(self, row):
         return "Group" + str(row + 1).zfill(self.group_number_width)
+
+    def refresh_groups(self):
+        for group in self.groups:
+            group.img_count = len(group.same)
+        self.groups = [group for group in self.groups if group.same]
+        self.group_number_width = max(2, len(str(len(self.groups))))
+        self.visible_rows = self._matching_rows()
+
+    def move_indexes_to_group(self, indexes, target_source_row):
+        moves = self._selected_images(indexes)
+        if not moves or target_source_row is None or target_source_row < 0 or target_source_row >= len(self.groups):
+            return False
+        self.beginResetModel()
+        target_group = self.groups[target_source_row]
+        for source_row, image in moves:
+            if source_row == target_source_row:
+                continue
+            source_group = self.groups[source_row]
+            if image in source_group.same:
+                source_group.same.remove(image)
+                target_group.same.append(image)
+        self.refresh_groups()
+        self.endResetModel()
+        return True
+
+    def create_group_from_indexes(self, indexes):
+        moves = self._selected_images(indexes)
+        if not moves:
+            return False
+        self.beginResetModel()
+        new_images = []
+        for source_row, image in moves:
+            source_group = self.groups[source_row]
+            if image in source_group.same:
+                source_group.same.remove(image)
+                new_images.append(image)
+        if new_images:
+            self.groups.append(ManualGroup(new_images))
+        self.refresh_groups()
+        self.endResetModel()
+        return bool(new_images)
+
+    def merge_source_rows(self, source_rows):
+        rows = sorted(set(row for row in source_rows if 0 <= row < len(self.groups)))
+        if len(rows) < 2:
+            return False
+        self.beginResetModel()
+        target = self.groups[rows[0]]
+        for row in sorted(rows[1:], reverse=True):
+            target.same.extend(self.groups[row].same)
+            del self.groups[row]
+        self.refresh_groups()
+        self.endResetModel()
+        return True
+
+    def remove_indexes(self, indexes):
+        moves = self._selected_images(indexes)
+        if not moves:
+            return False
+        self.beginResetModel()
+        for source_row, image in moves:
+            if source_row >= len(self.groups):
+                continue
+            group = self.groups[source_row]
+            if image in group.same:
+                group.same.remove(image)
+        self.refresh_groups()
+        self.endResetModel()
+        return True
+
+    def _selected_images(self, indexes):
+        seen = set()
+        moves = []
+        for index in indexes:
+            if not index.isValid():
+                continue
+            source_row = self.source_row(index.row())
+            image = self.image_at(index.row(), index.column())
+            if source_row is None or image is None:
+                continue
+            key = (source_row, id(image))
+            if key in seen:
+                continue
+            seen.add(key)
+            moves.append((source_row, image))
+        return sorted(moves, key=lambda item: item[0], reverse=True)
 
     def insert_extra_row(self):
         row = self.rowCount()

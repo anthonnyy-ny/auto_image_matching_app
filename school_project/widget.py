@@ -266,10 +266,10 @@ QProgressBar::chunk {
         self.pushButton_4.setText(_translate("Form", "取消掃描"))
         self.pushButton_4.setShortcut(_translate("Form", "3"))
         self.comboBox.clear()
+        self.comboBox.addItem(_translate("Form", "快速模式"), "fast")
         self.comboBox.addItem(_translate("Form", "標準模式"), "standard")
         self.comboBox.addItem(_translate("Form", "嚴格模式"), "strict")
         self.comboBox.addItem(_translate("Form", "寬鬆模式"), "loose")
-        self.comboBox.addItem(_translate("Form", "快速模式"), "fast")
 
 
 

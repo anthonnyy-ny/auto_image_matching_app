@@ -10,6 +10,7 @@ from widget import Ui_Form
 #from PyQt6.QtGui import QImage, QPixmap
 #from PyQt6.QtWidgets import QProgressBar
 import cv2
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 #from concurrent.futures import thread
 #from ctypes import BigEndianStructure
@@ -146,58 +147,112 @@ class MatchWorker(QThread):
         super().__init__()
         self.images = list(images)
         self.settings = settings
-        self.prefilter_rejects = 0
+        self.stats = {
+            "candidate_rejects": 0,
+            "sift_calls": 0,
+            "parallel_tasks": 0,
+            "merged_groups": 0,
+            "cancelled": False,
+        }
+        self.max_workers = min(4, max(1, (os.cpu_count() or 2) - 1))
 
     def quick_reject(self, first, second):
         if self.settings.full_hash_prefilter and first.hash_str and second.hash_str:
             if cam_hash(first.hash_str, second.hash_str) > self.settings.full_hash_reject_threshold:
-                self.prefilter_rejects += 1
+                self.stats["candidate_rejects"] += 1
                 return True
         return False
+
+    def candidate_indices(self, image_item, groups, start=0):
+        candidates = []
+        for index in range(start, len(groups)):
+            representative = groups[index].same[0]
+            if self.quick_reject(image_item, representative):
+                continue
+            candidates.append(index)
+        return candidates
+
+    def compare_candidate(self, image_item, group):
+        matcher = cv2.BFMatcher(crossCheck=True)
+        return sift_ahash(image_item, group.same[0], self.settings, matcher)
+
+    def find_first_match(self, image_item, groups, candidates):
+        if not candidates:
+            return None
+        results = {}
+        worker_count = min(self.max_workers, len(candidates))
+        if worker_count <= 1:
+            for index in candidates:
+                self.stats["sift_calls"] += 1
+                results[index] = self.compare_candidate(image_item, groups[index])
+        else:
+            self.stats["parallel_tasks"] += len(candidates)
+            with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                future_map = {
+                    executor.submit(self.compare_candidate, image_item, groups[index]): index
+                    for index in candidates
+                }
+                for future in as_completed(future_map):
+                    if self.isInterruptionRequested():
+                        break
+                    index = future_map[future]
+                    self.stats["sift_calls"] += 1
+                    try:
+                        results[index] = future.result()
+                    except Exception:
+                        results[index] = (False, False)
+        for index in candidates:
+            is_same, is_big = results.get(index, (False, False))
+            if is_same:
+                return index, is_big
+        return None
 
     def run(self):
         start = time.time()
         image_count = len(self.images)
         if image_count == 0:
-            self.finished.emit([], 0)
+            self.finished.emit([], 0, self.stats)
             return
 
         list_classification = []
         progress_step = max(1, image_count // 4)
         for i, image_item in enumerate(self.images):
             if self.isInterruptionRequested():
+                self.stats["cancelled"] = True
                 break
             self.progress.emit(int(i / image_count * 100))
             if((i % progress_step) == 0):
                 print("working ", int(i / image_count * 100), " % ......")
 
             IsClass = False
-            for index in range(len(list_classification)):
-                if self.quick_reject(image_item, list_classification[index].same[0]):
-                    continue
-                IsSame, IsBig = sift_ahash(image_item, list_classification[index].same[0], self.settings)
-                if(IsSame):
-                    IsClass = True
-                    list_classification[index].save_img(image_item, IsBig)
-                    if(IsBig):
-                        pop_list = []
-                        for buf_index in range(index + 1, len(list_classification)):
-                            if self.quick_reject(list_classification[buf_index].same[0], list_classification[index].same[0]):
-                                continue
-                            buf_Same, buf_Big = sift_ahash(list_classification[buf_index].same[0], list_classification[index].same[0], self.settings)
-                            if(buf_Same & (buf_Big == False)):
-                                list_classification[index].union(list_classification[buf_index])
-                                pop_list.append(buf_index)
-                        for idx in sorted(pop_list, reverse=True):
-                            del list_classification[idx]
-                    break
+            candidates = self.candidate_indices(image_item, list_classification)
+            first_match = self.find_first_match(image_item, list_classification, candidates)
+            if first_match is not None:
+                index, IsBig = first_match
+                IsClass = True
+                list_classification[index].save_img(image_item, IsBig)
+                if(IsBig):
+                    pop_list = []
+                    merge_candidates = self.candidate_indices(list_classification[index].same[0], list_classification, index + 1)
+                    for buf_index in merge_candidates:
+                        if self.isInterruptionRequested():
+                            self.stats["cancelled"] = True
+                            break
+                        self.stats["sift_calls"] += 1
+                        buf_Same, buf_Big = self.compare_candidate(list_classification[buf_index].same[0], list_classification[index])
+                        if(buf_Same & (buf_Big == False)):
+                            list_classification[index].union(list_classification[buf_index])
+                            pop_list.append(buf_index)
+                            self.stats["merged_groups"] += 1
+                    for idx in sorted(pop_list, reverse=True):
+                        del list_classification[idx]
 
             if not(IsClass):
                 list_classification.append(classification(image_item))
 
         self.progress.emit(100)
         list_classification = sorted(list_classification, key=lambda s: s.img_count)
-        self.finished.emit(list_classification, time.time() - start, {"prefilter_rejects": self.prefilter_rejects})
+        self.finished.emit(list_classification, time.time() - start, self.stats)
 def new_resize_img(img, new_scale):                 #check
 
     height, width = img.shape[:2]
@@ -552,7 +607,7 @@ def showCutIMG(img_1,img_2,save_img):
     cv2.imwrite(str(debug_output_dir() / ("small_" + str(save_img) + ".jpg")), img_2)
 
 
-def sift_ahash(img_1,img_2, settings=None):
+def sift_ahash(img_1,img_2, settings=None, matcher=None):
     settings = settings or get_match_settings("standard")
     save_img=0
     IMG_1=img_1
@@ -565,7 +620,8 @@ def sift_ahash(img_1,img_2, settings=None):
     if IMG_1.des is None or IMG_2.des is None:
         return False, False
 
-    match=bf.match(IMG_2.des,IMG_1.des)
+    active_matcher = matcher or bf
+    match=active_matcher.match(IMG_2.des,IMG_1.des)
     match = sorted(match, key=lambda x: x.distance)
 
     catch_match=5
@@ -802,10 +858,15 @@ class Form_controller(QtWidgets.QMainWindow):
         start=time.time()
         self.ui.pushButton_2.setEnabled(True)
         self.ui.pushButton_3.setEnabled(True)
+        cancelled = False
         if hasattr(self, "scan_worker") and self.scan_worker.isRunning():
             self.scan_worker.requestInterruption()
+            cancelled = True
         if hasattr(self, "match_worker") and self.match_worker.isRunning():
             self.match_worker.requestInterruption()
+            cancelled = True
+        if cancelled:
+            self.ui.progressBar.setFormat("Cancelling...")
         
         #self.ui.pushButton_3.setEnabled(False)
         del img[:]
@@ -980,10 +1041,18 @@ class Form_controller(QtWidgets.QMainWindow):
         class_list.CF_list = list_classification
         del img[:]
         self.ui.progressBar.setValue(100)
+        if stats.get("cancelled"):
+            self.ui.progressBar.setFormat("Cancelled")
+        else:
+            self.ui.progressBar.setFormat("100% | sift " + str(stats.get("sift_calls", 0)) + " | skip " + str(stats.get("candidate_rejects", 0)))
         self.ui.pushButton_2.setEnabled(True)
         self.ui.pushButton_3.setEnabled(True)
         print("classification input time : ", classification_time)
-        print("match prefilter rejects:", stats.get("prefilter_rejects", 0))
+        print("match candidate rejects:", stats.get("candidate_rejects", 0))
+        print("match sift calls:", stats.get("sift_calls", 0))
+        print("match parallel tasks:", stats.get("parallel_tasks", 0))
+        print("match merged groups:", stats.get("merged_groups", 0))
+        print("match cancelled:", stats.get("cancelled", False))
         print("\n\nmatch result\n\n")
         for group_index, tem_class in enumerate(list_classification):
             print(["Group" + str(group_index) + " : "] + [buf_img.filename for buf_img in tem_class.same])
@@ -998,6 +1067,7 @@ class Form_controller(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "提示", "還沒有可匹配的圖片，請先開始掃描。")
             return
         self.ui.progressBar.setValue(0)
+        self.ui.progressBar.setFormat("Matching...")
         self.ui.pushButton_2.setEnabled(False)
         self.ui.pushButton_3.setEnabled(False)
         mode = "standard"

@@ -39,7 +39,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabe
     
 from UI2 import Ui_mainWindow
 from savefile import Ui_Dialog
-from result_model import ResultTableModel, ThumbnailDelegate, ThumbnailManager
+from result_model import ManualGroup, ProjectImage, ResultTableModel, ThumbnailDelegate, ThumbnailManager
 
 import class_list
 from app_paths import debug_output_dir, default_open_dir, downloads_dir
@@ -722,6 +722,8 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.action_5.setToolTip("新建（Ctrl+N)")
        self.ui.action_10.setToolTip("打開資料夾（Ctrl+O)")
        self.ui.action_10.triggered.connect(self.openFile)
+       self.ui.action_12.triggered.connect(self.load_project)
+       self.ui.action_13.triggered.connect(self.save_project)
        self.ui.action_6.setToolTip("執行（F5)")
        self.ui.action_15.setToolTip("全屏幕模式（F11)")
        self.ui.action.setToolTip("最小化（F12)")
@@ -745,6 +747,8 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
        self.ui.pushButton_12.clicked.connect(self.showHorizontallHeader)
        self.ui.tableWidget.doubleClicked.connect(self.preview_item)
        self.ui.lineEdit.textChanged.connect(self.filter_results)
+       self.ui.tableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+       self.ui.tableWidget.customContextMenuRequested.connect(self.show_result_context_menu)
 
        self.populate_results()
        return
@@ -776,6 +780,16 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
 
     def animate_results(self):
         self.ui.tableWidget.viewport().update()
+
+    def sync_groups(self):
+        class_list.CF_list = self.result_model.groups
+        self.result_model.refresh_groups()
+        for column in range(self.result_model.columnCount()):
+            self.ui.tableWidget.setColumnWidth(column, 165)
+        for row in range(self.result_model.rowCount()):
+            self.ui.tableWidget.setRowHeight(row, 165)
+        self.ui.tableWidget.viewport().update()
+        self.ui.statusBar.showMessage("Manual edits applied: " + str(len(class_list.CF_list)) + " groups", 4000)
 
     def _thumbnail_ready(self, source_path):
         self.ui.tableWidget.viewport().update()
@@ -811,6 +825,56 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             return
         dialog = ImagePreviewDialog(image_path, index.data() or "", group_name, self)
         dialog.exec()
+
+    def show_result_context_menu(self, position):
+        indexes = self.ui.tableWidget.selectionModel().selectedIndexes()
+        if not indexes:
+            index = self.ui.tableWidget.indexAt(position)
+            if index.isValid():
+                self.ui.tableWidget.setCurrentIndex(index)
+                indexes = [index]
+        menu = QtWidgets.QMenu(self)
+
+        move_menu = menu.addMenu("移動到分組")
+        move_menu.setEnabled(bool(indexes))
+        for source_row, group in enumerate(self.result_model.groups):
+            action = move_menu.addAction(self.result_model.group_name(source_row) + " (" + str(group.img_count) + ")")
+            action.triggered.connect(lambda checked=False, row=source_row: self.move_selection_to_group(row))
+        new_group_action = menu.addAction("移到新分組", self.move_selection_to_new_group)
+        new_group_action.setEnabled(bool(indexes))
+        merge_action = menu.addAction("合併選取分組", self.merge_selected_groups)
+        merge_action.setEnabled(len(set(self.selected_source_rows())) >= 2)
+        menu.addSeparator()
+        remove_action = menu.addAction("移除選取圖片", self.remove_selected_images)
+        remove_action.setEnabled(bool(indexes))
+        menu.exec(self.ui.tableWidget.viewport().mapToGlobal(position))
+
+    def selected_indexes(self):
+        return self.ui.tableWidget.selectionModel().selectedIndexes()
+
+    def selected_source_rows(self):
+        rows = []
+        for index in self.selected_indexes():
+            source_row = self.result_model.source_row(index.row())
+            if source_row is not None:
+                rows.append(source_row)
+        return rows
+
+    def move_selection_to_group(self, target_source_row):
+        if self.result_model.move_indexes_to_group(self.selected_indexes(), target_source_row):
+            self.sync_groups()
+
+    def move_selection_to_new_group(self):
+        if self.result_model.create_group_from_indexes(self.selected_indexes()):
+            self.sync_groups()
+
+    def merge_selected_groups(self):
+        if self.result_model.merge_source_rows(self.selected_source_rows()):
+            self.sync_groups()
+
+    def remove_selected_images(self):
+        if self.result_model.remove_indexes(self.selected_indexes()):
+            self.sync_groups()
 
     def addrow(self):
         if(self.IsStore==1):
@@ -980,6 +1044,53 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         self.save_worker = None
         self.ui.statusBar.showMessage("Save failed", 5000)
         QMessageBox.warning(self, "保存失敗", message)
+
+    def save_project(self):
+        if not class_list.CF_list:
+            QMessageBox.warning(self, "提示", "目前沒有可保存的專案。")
+            return
+        default_path = os.path.join(str(downloads_dir()), "classification_project.json")
+        file_path, _ = QFileDialog.getSaveFileName(self, "保存分類專案", default_path, "JSON (*.json)")
+        if not file_path:
+            return
+        payload = {
+            "version": 1,
+            "saved_at": datetime.now().isoformat(timespec="seconds"),
+            "groups": self._save_snapshot(),
+        }
+        try:
+            with open(file_path, "w", encoding="utf-8") as json_file:
+                json.dump(payload, json_file, ensure_ascii=False, indent=2)
+            self.ui.statusBar.showMessage("Project saved: " + file_path, 8000)
+        except Exception as exc:
+            QMessageBox.warning(self, "保存失敗", str(exc))
+
+    def load_project(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "打開分類專案", str(downloads_dir()), "JSON (*.json)")
+        if not file_path:
+            return
+        try:
+            with open(file_path, "r", encoding="utf-8") as json_file:
+                payload = json.load(json_file)
+            groups = []
+            for group in payload.get("groups", []):
+                images = []
+                for image in group.get("images", []):
+                    source_path = image.get("source_path", "")
+                    filename = image.get("filename") or os.path.basename(source_path)
+                    if source_path:
+                        images.append(ProjectImage(source_path, filename))
+                if images:
+                    groups.append(ManualGroup(images))
+            if not groups:
+                QMessageBox.warning(self, "打開失敗", "這個專案沒有可用的圖片分組。")
+                return
+            class_list.CF_list = groups
+            self.result_model.set_groups(class_list.CF_list)
+            self.sync_groups()
+            self.ui.statusBar.showMessage("Project loaded: " + file_path, 8000)
+        except Exception as exc:
+            QMessageBox.warning(self, "打開失敗", str(exc))
     
     def readFile(self):
       
