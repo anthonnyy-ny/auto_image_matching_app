@@ -34,6 +34,7 @@ from controller2 import MainWindow_controller2
 
 import class_list
 from app_paths import debug_output_dir, default_open_dir
+from feature_cache import feature_cache
 from image_matcher import get_match_settings
 from image_utils import collect_image_files, iter_image_files
 
@@ -95,7 +96,7 @@ class Thread(QThread):
 
 class ScanWorker(QThread):
     progress = pyqtSignal(int)
-    finished = pyqtSignal(object, float, int)
+    finished = pyqtSignal(object, float, int, object)
     failed = pyqtSignal(str)
 
     def __init__(self, input_paths):
@@ -107,6 +108,7 @@ class ScanWorker(QThread):
 
     def run(self):
         start = time.time()
+        feature_cache.reset_stats()
         image_files = collect_image_files(self.input_paths)
         if len(image_files) == 0:
             self.finished.emit([], 0, 0)
@@ -127,18 +129,31 @@ class ScanWorker(QThread):
                 skipped += 1
                 print("skip image:", image_path, exc)
             self.progress.emit(int(count / total * 100))
-        self.finished.emit(loaded_images, time.time() - start, skipped)
+        stats = {
+            "cache_hits": feature_cache.hits,
+            "cache_misses": feature_cache.misses,
+            "cache_writes": feature_cache.writes,
+        }
+        self.finished.emit(loaded_images, time.time() - start, skipped, stats)
 
 
 class MatchWorker(QThread):
     progress = pyqtSignal(int)
-    finished = pyqtSignal(object, float)
+    finished = pyqtSignal(object, float, object)
     failed = pyqtSignal(str)
 
     def __init__(self, images, settings):
         super().__init__()
         self.images = list(images)
         self.settings = settings
+        self.prefilter_rejects = 0
+
+    def quick_reject(self, first, second):
+        if self.settings.full_hash_prefilter and first.hash_str and second.hash_str:
+            if cam_hash(first.hash_str, second.hash_str) > self.settings.full_hash_reject_threshold:
+                self.prefilter_rejects += 1
+                return True
+        return False
 
     def run(self):
         start = time.time()
@@ -158,6 +173,8 @@ class MatchWorker(QThread):
 
             IsClass = False
             for index in range(len(list_classification)):
+                if self.quick_reject(image_item, list_classification[index].same[0]):
+                    continue
                 IsSame, IsBig = sift_ahash(image_item, list_classification[index].same[0], self.settings)
                 if(IsSame):
                     IsClass = True
@@ -165,6 +182,8 @@ class MatchWorker(QThread):
                     if(IsBig):
                         pop_list = []
                         for buf_index in range(index + 1, len(list_classification)):
+                            if self.quick_reject(list_classification[buf_index].same[0], list_classification[index].same[0]):
+                                continue
                             buf_Same, buf_Big = sift_ahash(list_classification[buf_index].same[0], list_classification[index].same[0], self.settings)
                             if(buf_Same & (buf_Big == False)):
                                 list_classification[index].union(list_classification[buf_index])
@@ -178,7 +197,7 @@ class MatchWorker(QThread):
 
         self.progress.emit(100)
         list_classification = sorted(list_classification, key=lambda s: s.img_count)
-        self.finished.emit(list_classification, time.time() - start)
+        self.finished.emit(list_classification, time.time() - start, {"prefilter_rejects": self.prefilter_rejects})
 def new_resize_img(img, new_scale):                 #check
 
     height, width = img.shape[:2]
@@ -445,8 +464,15 @@ class IMG:
         #cv2.imwrite("D:/source/vscode/python_project/check_img/gray"+str(self.filename)+".jpg", self.gray_img)
 
     def create_sift(self):      #check
+        cached = feature_cache.load(self.name)
+        if cached is not None:
+            self.kp = cached["keypoints"]
+            self.des = cached["descriptors"]
+            self.hash_str = cached["hash_str"]
+            return
         self.kp,self.des=sift.detectAndCompute(self.gray_img, None)
         self.hash_str=a_hash(self.img)
+        feature_cache.save(self.name, self.hash_str, self.kp, self.des)
 
     def showIMG(self):          #check
         cv2.imshow(self.name, self.img)
@@ -933,7 +959,8 @@ class Form_controller(QtWidgets.QMainWindow):
         if self.ui.progressBar.value() >= 100:
             self.ui.pushButton_2.setEnabled(True)
 
-    def scan_finished(self, loaded_images, total_input_time, skipped):
+    def scan_finished(self, loaded_images, total_input_time, skipped, stats=None):
+        stats = stats or {}
         del img[:]
         img.extend(loaded_images)
         self.ui.progressBar.setValue(100)
@@ -941,18 +968,22 @@ class Form_controller(QtWidgets.QMainWindow):
         self.ui.pushButton_3.setEnabled(True)
         print("total input time : ", total_input_time)
         print("loaded images : ", len(img), " skipped : ", skipped)
+        print("feature cache hits:", stats.get("cache_hits", 0), "misses:", stats.get("cache_misses", 0), "writes:", stats.get("cache_writes", 0))
+        self.ui.progressBar.setFormat("100% | cache " + str(stats.get("cache_hits", 0)) + "/" + str(len(img)))
         if len(img) == 0:
             QMessageBox.warning(self, "提示", "沒有成功讀取任何圖片。")
         elif skipped > 0:
             QMessageBox.information(self, "掃描完成", "已讀取 " + str(len(img)) + " 張圖片，略過 " + str(skipped) + " 張。")
 
-    def match_finished(self, list_classification, classification_time):
+    def match_finished(self, list_classification, classification_time, stats=None):
+        stats = stats or {}
         class_list.CF_list = list_classification
         del img[:]
         self.ui.progressBar.setValue(100)
         self.ui.pushButton_2.setEnabled(True)
         self.ui.pushButton_3.setEnabled(True)
         print("classification input time : ", classification_time)
+        print("match prefilter rejects:", stats.get("prefilter_rejects", 0))
         print("\n\nmatch result\n\n")
         for group_index, tem_class in enumerate(list_classification):
             print(["Group" + str(group_index) + " : "] + [buf_img.filename for buf_img in tem_class.same])

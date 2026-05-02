@@ -12,4 +12,5 @@ env/
 .vscode/
 
 *.log
+.cache/
 ui_*_check.png

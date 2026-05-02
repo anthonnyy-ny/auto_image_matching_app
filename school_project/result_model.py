@@ -1,43 +1,125 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
+import hashlib
+import os
 from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from app_paths import thumbnail_cache_dir
 
-class ThumbnailCache:
-    def __init__(self, max_items=320, size=QtCore.QSize(136, 112)):
+
+class ThumbnailWorkerSignals(QtCore.QObject):
+    ready = QtCore.pyqtSignal(str, str)
+    failed = QtCore.pyqtSignal(str)
+
+
+class ThumbnailWorker(QtCore.QRunnable):
+    def __init__(self, source_path, cache_path, size):
+        super().__init__()
+        self.source_path = source_path
+        self.cache_path = cache_path
+        self.size = size
+        self.signals = ThumbnailWorkerSignals()
+
+    def run(self):
+        try:
+            reader = QtGui.QImageReader(self.source_path)
+            reader.setAutoTransform(True)
+            image_size = reader.size()
+            if image_size.isValid():
+                image_size.scale(self.size, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+                reader.setScaledSize(image_size)
+            image = reader.read()
+            if image.isNull():
+                raise ValueError(reader.errorString() or "thumbnail read failed")
+
+            canvas = QtGui.QImage(self.size, QtGui.QImage.Format.Format_ARGB32)
+            canvas.fill(QtCore.Qt.GlobalColor.transparent)
+            painter = QtGui.QPainter(canvas)
+            painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
+            target = QtCore.QRect(QtCore.QPoint(0, 0), image.size())
+            target.moveCenter(QtCore.QRect(QtCore.QPoint(0, 0), self.size).center())
+            painter.drawImage(target, image)
+            painter.end()
+
+            cache_path = Path(self.cache_path)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = cache_path.with_suffix(".tmp")
+            if not canvas.save(str(tmp_path), "PNG"):
+                raise ValueError("thumbnail cache write failed")
+            os.replace(tmp_path, cache_path)
+            self.signals.ready.emit(self.source_path, self.cache_path)
+        except Exception:
+            self.signals.failed.emit(self.source_path)
+
+
+class ThumbnailManager(QtCore.QObject):
+    thumbnailReady = QtCore.pyqtSignal(str)
+
+    def __init__(self, max_items=420, size=QtCore.QSize(136, 112), parent=None):
+        super().__init__(parent)
         self.max_items = max_items
         self.size = size
         self._cache = OrderedDict()
+        self._pending = set()
+        self._failed = set()
+        self._cache_dir = thumbnail_cache_dir()
+        self._pool = QtCore.QThreadPool.globalInstance()
 
-    def pixmap(self, path):
+    def request(self, path):
         key = str(path)
         cached = self._cache.get(key)
         if cached is not None:
             self._cache.move_to_end(key)
             return cached
 
-        reader = QtGui.QImageReader(key)
-        reader.setAutoTransform(True)
-        image_size = reader.size()
-        if image_size.isValid():
-            image_size.scale(self.size, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-            reader.setScaledSize(image_size)
-        image = reader.read()
-        if image.isNull():
-            pixmap = QtGui.QPixmap()
-        else:
-            pixmap = QtGui.QPixmap.fromImage(image)
+        cache_path = self._disk_cache_path(key)
+        if cache_path is not None and cache_path.exists():
+            pixmap = QtGui.QPixmap(str(cache_path))
+            if not pixmap.isNull():
+                self._remember(key, pixmap)
+                return pixmap
 
+        if key not in self._pending and key not in self._failed and cache_path is not None:
+            self._pending.add(key)
+            worker = ThumbnailWorker(key, str(cache_path), self.size)
+            worker.signals.ready.connect(self._thumbnail_ready)
+            worker.signals.failed.connect(self._thumbnail_failed)
+            self._pool.start(worker)
+        return None
+
+    def _remember(self, key, pixmap):
         self._cache[key] = pixmap
         if len(self._cache) > self.max_items:
             self._cache.popitem(last=False)
-        return pixmap
 
-    def clear(self):
+    def _disk_cache_path(self, path):
+        try:
+            resolved = str(Path(path).resolve())
+            stat = os.stat(resolved)
+        except OSError:
+            return None
+        signature = resolved + "|" + str(stat.st_size) + "|" + str(stat.st_mtime_ns) + "|" + str(self.size.width()) + "x" + str(self.size.height())
+        digest = hashlib.sha1(signature.encode("utf-8", errors="ignore")).hexdigest()
+        return self._cache_dir / (digest + ".png")
+
+    def _thumbnail_ready(self, source_path, cache_path):
+        self._pending.discard(source_path)
+        pixmap = QtGui.QPixmap(cache_path)
+        if not pixmap.isNull():
+            self._remember(source_path, pixmap)
+        self.thumbnailReady.emit(source_path)
+
+    def _thumbnail_failed(self, source_path):
+        self._pending.discard(source_path)
+        self._failed.add(source_path)
+        self.thumbnailReady.emit(source_path)
+
+    def clear_memory(self):
         self._cache.clear()
+        self._failed.clear()
 
 
 class ResultTableModel(QtCore.QAbstractTableModel):
@@ -181,9 +263,9 @@ class ResultTableModel(QtCore.QAbstractTableModel):
 
 
 class ThumbnailDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, cache=None, parent=None):
+    def __init__(self, thumbnail_manager=None, parent=None):
         super().__init__(parent)
-        self.cache = cache or ThumbnailCache()
+        self.thumbnail_manager = thumbnail_manager or ThumbnailManager(parent=self)
 
     def paint(self, painter, option, index):
         image_path = index.data(ResultTableModel.ImagePathRole)
@@ -200,8 +282,8 @@ class ThumbnailDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawRoundedRect(rect, 12, 12)
 
         pixmap_rect = rect.adjusted(8, 8, -8, -32)
-        pixmap = self.cache.pixmap(image_path)
-        if not pixmap.isNull():
+        pixmap = self.thumbnail_manager.request(image_path)
+        if pixmap is not None and not pixmap.isNull():
             scaled = pixmap.scaled(
                 pixmap_rect.size(),
                 QtCore.Qt.AspectRatioMode.KeepAspectRatio,
@@ -210,6 +292,9 @@ class ThumbnailDelegate(QtWidgets.QStyledItemDelegate):
             target = QtCore.QRect(QtCore.QPoint(0, 0), scaled.size())
             target.moveCenter(pixmap_rect.center())
             painter.drawPixmap(target, scaled)
+        else:
+            painter.setPen(QtGui.QColor(126, 70, 150, 150))
+            painter.drawText(pixmap_rect, QtCore.Qt.AlignmentFlag.AlignCenter, "Loading...")
 
         text_rect = QtCore.QRect(rect.left() + 8, rect.bottom() - 26, rect.width() - 16, 20)
         painter.setPen(QtGui.QColor(58, 39, 70))

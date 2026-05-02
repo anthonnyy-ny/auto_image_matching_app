@@ -39,7 +39,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QFormLayout, QLabe
     
 from UI2 import Ui_mainWindow
 from savefile import Ui_Dialog
-from result_model import ResultTableModel, ThumbnailCache, ThumbnailDelegate
+from result_model import ResultTableModel, ThumbnailDelegate, ThumbnailManager
 
 import class_list
 from app_paths import debug_output_dir, default_open_dir, downloads_dir
@@ -698,11 +698,14 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         super().__init__() # in python3, super(Class, self).xxx = super().xxx
         self.ui = Ui_mainWindow()
         self.ui.setupUi(self)
-        self.thumbnail_cache = ThumbnailCache()
+        self.thumbnail_manager = ThumbnailManager(parent=self)
         self.result_model = ResultTableModel(class_list.CF_list, self)
-        self.thumbnail_delegate = ThumbnailDelegate(self.thumbnail_cache, self.ui.tableWidget)
+        self.thumbnail_delegate = ThumbnailDelegate(self.thumbnail_manager, self.ui.tableWidget)
         self.ui.tableWidget.setModel(self.result_model)
         self.ui.tableWidget.setItemDelegate(self.thumbnail_delegate)
+        self.thumbnail_manager.thumbnailReady.connect(self._thumbnail_ready)
+        self.ui.tableWidget.verticalScrollBar().valueChanged.connect(self.prefetch_visible_thumbnails)
+        self.ui.tableWidget.horizontalScrollBar().valueChanged.connect(self.prefetch_visible_thumbnails)
         self.save_worker = None
         self.save_progress = QtWidgets.QProgressBar(self)
         self.save_progress.setMaximumWidth(220)
@@ -749,7 +752,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
     def populate_results(self):
         groups = class_list.CF_list
         group_count = len(groups)
-        self.thumbnail_cache.clear()
+        self.thumbnail_manager.clear_memory()
         self.result_model.set_groups(groups)
         for column in range(self.result_model.columnCount()):
             self.ui.tableWidget.setColumnWidth(column, 165)
@@ -757,6 +760,7 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
             self.ui.tableWidget.setRowHeight(row, 165)
         self.ui.statusBar.showMessage("Loaded " + str(group_count) + " groups, lazy thumbnails enabled", 5000)
         self.animate_results()
+        QtCore.QTimer.singleShot(0, self.prefetch_visible_thumbnails)
 
     def filter_results(self, text):
         self.result_model.set_filter_text(text)
@@ -768,9 +772,35 @@ class MainWindow_controller2(QtWidgets.QMainWindow):
         total = len(self.result_model.groups)
         if text.strip():
             self.ui.statusBar.showMessage("Showing " + str(shown) + " of " + str(total) + " groups", 2500)
+        QtCore.QTimer.singleShot(0, self.prefetch_visible_thumbnails)
 
     def animate_results(self):
         self.ui.tableWidget.viewport().update()
+
+    def _thumbnail_ready(self, source_path):
+        self.ui.tableWidget.viewport().update()
+
+    def prefetch_visible_thumbnails(self):
+        view = self.ui.tableWidget
+        model = self.result_model
+        if model.rowCount() <= 0 or model.columnCount() <= 0:
+            return
+        viewport = view.viewport()
+        top_left = view.indexAt(QtCore.QPoint(0, 0))
+        bottom_right = view.indexAt(QtCore.QPoint(max(0, viewport.width() - 1), max(0, viewport.height() - 1)))
+        first_row = top_left.row() if top_left.isValid() else 0
+        first_col = top_left.column() if top_left.isValid() else 0
+        last_row = bottom_right.row() if bottom_right.isValid() else min(model.rowCount() - 1, first_row + 5)
+        last_col = bottom_right.column() if bottom_right.isValid() else min(model.columnCount() - 1, first_col + 6)
+        first_row = max(0, first_row - 1)
+        first_col = max(0, first_col - 1)
+        last_row = min(model.rowCount() - 1, last_row + 2)
+        last_col = min(model.columnCount() - 1, last_col + 2)
+        for row in range(first_row, last_row + 1):
+            for column in range(first_col, last_col + 1):
+                image_path = model.index(row, column).data(ResultTableModel.ImagePathRole)
+                if image_path:
+                    self.thumbnail_manager.request(image_path)
 
     def preview_item(self, index):
         if not index.isValid():

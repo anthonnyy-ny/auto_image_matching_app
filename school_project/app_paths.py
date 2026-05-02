@@ -26,3 +26,15 @@ def debug_output_dir():
     path = PROJECT_ROOT / "debug_output"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def thumbnail_cache_dir():
+    path = PROJECT_ROOT / ".cache" / "thumbnails"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def feature_cache_dir():
+    path = PROJECT_ROOT / ".cache" / "features"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
