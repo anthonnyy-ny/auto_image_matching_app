@@ -63,3 +63,8 @@ class ProjectImport(BaseModel):
 class JobResponse(BaseModel):
     job_id: str
     status: str
+
+
+class AssistantChatRequest(BaseModel):
+    message: StrictStr
+    context: Dict[str, Any] = Field(default_factory=dict)

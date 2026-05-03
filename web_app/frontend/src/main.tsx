@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  askAssistant,
   cancelJob,
   clearCache,
   createProject,
@@ -27,6 +28,7 @@ import "./styles.css";
 type DragPayload = { groupIndex: number; imageIndex: number };
 type PreviewState = { groupName: string; image: ResultImage };
 type MatchMode = "strict" | "standard" | "loose" | "fast" | "hybrid" | "turbo" | "ann" | "ai" | "ai-hybrid" | "ai-trained";
+type ChatMessage = { role: "assistant" | "user"; text: string };
 
 const UPLOAD_BATCH_SIZE = 500;
 const MATCH_MODES: { value: MatchMode; label: string }[] = [
@@ -79,6 +81,16 @@ function App() {
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatSuggestions, setChatSuggestions] = useState(["怎么上传图片？", "为什么 AI 是 Fallback？", "怎么导出分组结果？"]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      text: "你好，我是网站守护女神。第一次用的话，问我上传、AI 匹配、修正分组、导出结果都可以。",
+    },
+  ]);
   const pollTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -405,6 +417,30 @@ function App() {
     }
   }
 
+  async function sendChat(message = chatInput) {
+    const text = message.trim();
+    if (!text || chatBusy) return;
+    setChatInput("");
+    setChatOpen(true);
+    setChatMessages((items) => [...items, { role: "user", text }]);
+    setChatBusy(true);
+    try {
+      const response = await askAssistant(text, {
+        project: project?.name,
+        image_count: totalImages,
+        mode: matchMode,
+        ai_backend: aiStatus?.ai_backend,
+        ai_ready: aiStatus?.ai_ready,
+      });
+      setChatMessages((items) => [...items, { role: "assistant", text: response.answer }]);
+      setChatSuggestions(response.suggestions);
+    } catch (error) {
+      setChatMessages((items) => [...items, { role: "assistant", text: "我这边暂时连不上助手 API。你可以先刷新页面，或检查后端服务是否在 8000 端口运行。" }]);
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
   const currentModeLabel = MATCH_MODES.find((mode) => mode.value === matchMode)?.label ?? "AI Hybrid";
   const recentProjects = projects.slice(0, 6);
 
@@ -412,10 +448,10 @@ function App() {
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">A</span>
+          <img className="brand-mark" src="/guardian-logo.png" alt="AI Matcher guardian logo" />
           <div>
             <strong>AI Matcher</strong>
-            <small>Personal workspace</small>
+            <small>Guardian workspace</small>
           </div>
         </div>
         <nav className="nav">
@@ -443,9 +479,17 @@ function App() {
 
       <section className="main-area" id="home">
         <header className="topbar">
-          <div>
+          <div className="title-block">
             <span className="crumb">Dashboard</span>
             <h1>What should AI organize today?</h1>
+            <p className="guardian-line">Your guardian goddess watches over every image match, correction, and AI model run.</p>
+          </div>
+          <div className="guardian-card" aria-label="Website guardian goddess logo">
+            <img src="/guardian-logo.png" alt="Website guardian goddess" />
+            <div>
+              <span>Guardian Goddess</span>
+              <strong>AI Matching Studio</strong>
+            </div>
           </div>
           <div className="top-actions">
             <select value={project?.id ?? ""} onChange={(event) => loadProject(event.target.value)}>
@@ -605,6 +649,48 @@ function App() {
           </div>
         </div>
       )}
+
+      <section className={chatOpen ? "chat-widget open" : "chat-widget"}>
+        {chatOpen && (
+          <div className="chat-panel">
+            <header>
+              <img src="/guardian-logo.png" alt="Guardian assistant" />
+              <div>
+                <strong>Guardian Goddess</strong>
+                <span>Beginner tech support</span>
+              </div>
+              <button onClick={() => setChatOpen(false)}>Close</button>
+            </header>
+            <div className="chat-messages">
+              {chatMessages.map((message, index) => (
+                <div className={message.role === "assistant" ? "chat-bubble assistant" : "chat-bubble user"} key={`${message.role}-${index}`}>
+                  {message.text}
+                </div>
+              ))}
+              {chatBusy && <div className="chat-bubble assistant">我正在帮你看...</div>}
+            </div>
+            <div className="chat-suggestions">
+              {chatSuggestions.map((item) => (
+                <button key={item} onClick={() => sendChat(item)} disabled={chatBusy}>{item}</button>
+              ))}
+            </div>
+            <form
+              className="chat-input"
+              onSubmit={(event) => {
+                event.preventDefault();
+                sendChat();
+              }}
+            >
+              <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="问我怎么使用这个网站..." />
+              <button className="primary" disabled={chatBusy || !chatInput.trim()}>Send</button>
+            </form>
+          </div>
+        )}
+        <button className="chat-launcher" onClick={() => setChatOpen((value) => !value)}>
+          <img src="/guardian-logo.png" alt="Open guardian assistant" />
+          <span>技术支援</span>
+        </button>
+      </section>
     </main>
   );
 }

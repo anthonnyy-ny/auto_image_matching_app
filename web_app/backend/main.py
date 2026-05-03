@@ -23,12 +23,13 @@ from app_paths import feature_cache_dir, thumbnail_cache_dir
 from ai_embedding import ai_embedding_metadata, reload_ai_embedding
 from embedding_cache import embedding_cache
 from matching_core import LAZY_FEATURE_MODES, AI_MODES, MatchCancelled, match_images, scan_images, serialize_groups
+from support_assistant import assistant_reply
 
 try:
-    from .schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
+    from .schemas import AssistantChatRequest, JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
     from .storage import UploadLimitError, create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
 except ImportError:
-    from schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
+    from schemas import AssistantChatRequest, JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
     from storage import UploadLimitError, create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
 
 
@@ -88,6 +89,11 @@ def ai_status():
 @app.post("/api/ai/reload")
 def ai_reload():
     return reload_ai_embedding()
+
+
+@app.post("/api/assistant/chat")
+def assistant_chat(payload: AssistantChatRequest):
+    return assistant_reply(payload.message, payload.context)
 
 
 @app.post("/api/projects", response_model=ProjectResponse)

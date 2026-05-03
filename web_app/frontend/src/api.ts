@@ -55,6 +55,13 @@ export type AiStatus = {
   available_models?: { id: string; source: string; recommended?: boolean }[];
 };
 
+export type AssistantChatResponse = {
+  role: "assistant";
+  name: string;
+  answer: string;
+  suggestions: string[];
+};
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, options);
   if (!response.ok) {
@@ -123,6 +130,14 @@ export function getAiStatus() {
 
 export function reloadAi() {
   return request<AiStatus>("/api/ai/reload", { method: "POST" });
+}
+
+export function askAssistant(message: string, context: Record<string, unknown> = {}) {
+  return request<AssistantChatResponse>("/api/assistant/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, context }),
+  });
 }
 
 export function getResults(projectId: string) {
