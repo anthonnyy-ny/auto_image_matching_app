@@ -18,7 +18,7 @@ class ProjectResponse(BaseModel):
 
 
 class MatchRequest(BaseModel):
-    mode: Literal["strict", "standard", "loose", "fast", "hybrid", "turbo", "ann"] = "hybrid"
+    mode: Literal["strict", "standard", "loose", "fast", "hybrid", "turbo", "ann", "ai", "ai-hybrid", "ai-trained"] = "ai-hybrid"
 
 
 class ResultImage(BaseModel):

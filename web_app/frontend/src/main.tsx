@@ -23,11 +23,14 @@ import "./styles.css";
 
 type DragPayload = { groupIndex: number; imageIndex: number };
 type PreviewState = { groupName: string; image: ResultImage };
-type MatchMode = "strict" | "standard" | "loose" | "fast" | "hybrid" | "turbo" | "ann";
+type MatchMode = "strict" | "standard" | "loose" | "fast" | "hybrid" | "turbo" | "ann" | "ai" | "ai-hybrid" | "ai-trained";
 
 const UPLOAD_BATCH_SIZE = 500;
 const MATCH_MODES: { value: MatchMode; label: string }[] = [
-  { value: "hybrid", label: "Hybrid Match" },
+  { value: "ai-hybrid", label: "AI Hybrid" },
+  { value: "ai-trained", label: "Trained AI" },
+  { value: "ai", label: "AI Vector" },
+  { value: "hybrid", label: "Classic Hybrid" },
   { value: "standard", label: "SIFT Match" },
   { value: "strict", label: "Strict SIFT" },
   { value: "loose", label: "Loose SIFT" },
@@ -58,12 +61,12 @@ function formatBytes(bytes: number) {
 }
 
 function App() {
-  const [projectName, setProjectName] = useState("Web Classification");
+  const [projectName, setProjectName] = useState("AI Matching Studio");
   const [project, setProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [result, setResult] = useState<MatchResponse | null>(null);
   const [status, setStatus] = useState("Backend ready. Create or load a project.");
-  const [matchMode, setMatchMode] = useState<MatchMode>("hybrid");
+  const [matchMode, setMatchMode] = useState<MatchMode>("ai-hybrid");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -104,16 +107,17 @@ function App() {
     };
     const skipped = Array.isArray(stats.skipped) ? stats.skipped.length : 0;
     return [
-      ["Match sets", result?.group_count ?? 0],
+      ["Sets", result?.group_count ?? 0],
       ["Images", totalImages],
-      ["Backend", match.vector_backend ?? "none"],
-      ["Current Img", match.current_image ?? 0],
+      ["AI", scan.ai_backend ?? match.ai_backend ?? "ready"],
+      ["Model", scan.ai_model ?? match.ai_model ?? match.vector_backend ?? "classic"],
+      ["Current", match.current_image ?? 0],
       ["Processed", match.processed_images ?? 0],
-      ["Current", match.current_groups ?? 0],
+      ["Groups", match.current_groups ?? 0],
       ["Cache hits", scan.cache_hits ?? 0],
-      ["Cache misses", scan.cache_misses ?? 0],
-      ["Vector K", match.embedding_candidates ?? 0],
-      ["Hash auto", match.hash_auto_matches ?? 0],
+      ["AI cache", scan.embedding_cache_hits ?? scan.ai_cache_hits ?? 0],
+      ["Vector hits", match.embedding_candidates ?? 0],
+      ["Auto", match.hash_auto_matches ?? 0],
       ["SIFT calls", match.sift_calls ?? 0],
       ["Speed", match.images_per_second ?? 0],
       ["ETA", match.eta_seconds ?? 0],
@@ -369,124 +373,176 @@ function App() {
     setSelectedGroups(next);
   }
 
+  const currentModeLabel = MATCH_MODES.find((mode) => mode.value === matchMode)?.label ?? "AI Hybrid";
+  const recentProjects = projects.slice(0, 6);
+
   return (
-    <main className="shell">
-      <section className="hero">
-        <div>
-          <p className="eyebrow">AI Image Matching Web</p>
-          <h1>Auto Similar Image Organizer</h1>
-          <p>Upload images, run SIFT image matching, review matched sets, correct mistakes, and export ordered results.</p>
+    <main className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark">A</span>
+          <div>
+            <strong>AI Matcher</strong>
+            <small>Personal workspace</small>
+          </div>
         </div>
-        <div className="stats">
-          <span>{project ? "Project Ready" : "No Project"}</span>
+        <nav className="nav">
+          <a className="active" href="#home">Home</a>
+          <a href="#projects">Projects</a>
+          <a href="#results">Results</a>
+          <a href="#exports">Exports</a>
+        </nav>
+        <div className="side-section">
+          <span>Projects</span>
+          <button className="side-link" onClick={handleCreate} disabled={busy}>New project</button>
+          {recentProjects.map((item) => (
+            <button className={project?.id === item.id ? "side-link selected" : "side-link"} key={item.id} onClick={() => loadProject(item.id)}>
+              <span>{item.name}</span>
+              <small>{item.image_count}</small>
+            </button>
+          ))}
+        </div>
+        <div className="side-card">
+          <span>{currentModeLabel}</span>
           <strong>{totalImages}</strong>
-          <small>images</small>
+          <small>images in scope</small>
         </div>
-      </section>
+      </aside>
 
-      <section className="workflow">
-        <div className="panel">
-          <label>Project</label>
-          <div className="row">
-            <input value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+      <section className="main-area" id="home">
+        <header className="topbar">
+          <div>
+            <span className="crumb">Dashboard</span>
+            <h1>What should AI organize today?</h1>
+          </div>
+          <div className="top-actions">
+            <select value={project?.id ?? ""} onChange={(event) => loadProject(event.target.value)}>
+              <option value="">Project history</option>
+              {projects.map((item) => (
+                <option key={item.id} value={item.id}>{item.name} ({item.image_count})</option>
+              ))}
+            </select>
+            <button onClick={handleClearCache} disabled={busy}>Clear cache</button>
+          </div>
+        </header>
+
+        <section className="composer">
+          <input value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+          <div className="composer-actions">
+            <input className="file" type="file" accept="image/*,.zip" multiple disabled={!project || busy} onChange={(event) => handleUpload(event.target.files)} />
+            <select value={matchMode} disabled={busy} onChange={(event) => setMatchMode(event.target.value as MatchMode)}>
+              {MATCH_MODES.map((mode) => (
+                <option key={mode.value} value={mode.value}>{mode.label}</option>
+              ))}
+            </select>
             <button onClick={handleCreate} disabled={busy}>Create</button>
+            <button className="primary" onClick={handleMatch} disabled={!project || !project.image_count || busy}>Run</button>
+            <button onClick={handleCancel} disabled={!activeJobId}>Cancel</button>
           </div>
-          <select value={project?.id ?? ""} onChange={(event) => loadProject(event.target.value)}>
-            <option value="">Project history</option>
-            {projects.map((item) => (
-              <option key={item.id} value={item.id}>{item.name} ({item.image_count})</option>
-            ))}
-          </select>
-          {project && <p className="meta">ID: {project.id}</p>}
-        </div>
+        </section>
 
-        <div className="panel">
-          <label>Upload / Restore</label>
-          <input className="file" type="file" accept="image/*,.zip" multiple disabled={!project || busy} onChange={(event) => handleUpload(event.target.files)} />
-          <input className="file" type="file" accept="application/json" disabled={busy} onChange={(event) => handleImport(event.target.files?.[0] ?? null)} />
-          <select value={matchMode} disabled={busy} onChange={(event) => setMatchMode(event.target.value as MatchMode)}>
-            {MATCH_MODES.map((mode) => (
-              <option key={mode.value} value={mode.value}>{mode.label}</option>
-            ))}
-          </select>
-          <div className="row">
-            <button className="wide" onClick={handleMatch} disabled={!project || !project.image_count || busy}>Start Match</button>
-            <button className="wide ghost" onClick={handleCancel} disabled={!activeJobId}>Cancel</button>
+        <section className="status-strip">
+          <div>
+            <span>Run state</span>
+            <strong>{status}</strong>
           </div>
-        </div>
-
-        <div className="panel status">
-          <label>Status</label>
-          <p>{status}</p>
           <div className="progress"><span style={{ width: `${progress}%` }} /></div>
-        </div>
-      </section>
+        </section>
 
-      <section className="dashboard">
-        {dashboard.map(([label, value]) => (
-          <div className="metric" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
+        <section className="dashboard">
+          {dashboard.map(([label, value]) => (
+            <div className="metric" key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="project-grid" id="projects">
+          <article className="project-panel">
+            <div className="section-title">
+              <h2>Current project</h2>
+              <span>{project ? project.name : "No project"}</span>
+            </div>
+            <p className="meta">{project ? project.id : "Create or load a project to start matching."}</p>
+            <div className="panel-actions">
+              <input className="file" type="file" accept="application/json" disabled={busy} onChange={(event) => handleImport(event.target.files?.[0] ?? null)} />
+              {project && <a className="button" href={projectFileUrl(project.id)}>Project JSON</a>}
+              {project && <a className="button" href={exportUrl(project.id)}>Export ZIP</a>}
+            </div>
+          </article>
+
+          <article className="project-panel">
+            <div className="section-title">
+              <h2>Recent projects</h2>
+              <span>{projects.length}</span>
+            </div>
+            <div className="recent-list">
+              {recentProjects.length === 0 && <div className="empty compact">No projects yet.</div>}
+              {recentProjects.map((item) => (
+                <button className="project-row" key={item.id} onClick={() => loadProject(item.id)}>
+                  <span>{item.name}</span>
+                  <small>{item.image_count} images</small>
+                </button>
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <section className="toolbar panel" id="exports">
+          <input placeholder="Search group or filename..." value={filter} onChange={(event) => setFilter(event.target.value)} />
+          <button onClick={moveSelectedToNewGroup} disabled={!selectedImages.size}>New Set</button>
+          <button onClick={removeSelectedImages} disabled={!selectedImages.size}>Remove</button>
+          <button onClick={mergeSelectedGroups} disabled={selectedGroups.size < 2}>Merge</button>
+          <button onClick={persistEdits} disabled={!result || busy}>Save</button>
+        </section>
+
+        <section className="results" id="results">
+          <div className="section-title">
+            <h2>Matched Sets</h2>
+            <span>{result ? `${visibleGroups.length}/${result.group_count} match sets` : "Waiting"}</span>
           </div>
-        ))}
-      </section>
-
-      <section className="toolbar panel">
-        <input placeholder="Search group or filename..." value={filter} onChange={(event) => setFilter(event.target.value)} />
-        <button onClick={moveSelectedToNewGroup} disabled={!selectedImages.size}>Move to New</button>
-        <button onClick={removeSelectedImages} disabled={!selectedImages.size}>Remove</button>
-        <button onClick={mergeSelectedGroups} disabled={selectedGroups.size < 2}>Merge</button>
-        <button onClick={persistEdits} disabled={!result || busy}>Save</button>
-        <button onClick={handleClearCache} disabled={busy}>Clear Cache</button>
-        {project && <a className="button" href={projectFileUrl(project.id)}>Project JSON</a>}
-        {project && <a className="button" href={exportUrl(project.id)}>Export ZIP</a>}
-      </section>
-
-      <section className="results">
-        <div className="section-title">
-          <h2>Match Results</h2>
-          <span>{result ? `${visibleGroups.length}/${result.group_count} match sets` : "Waiting"}</span>
-        </div>
-        {!result && <div className="empty">After image matching, matched image sets will appear here.</div>}
-        {visibleGroups.map((group) => {
-          const realGroupIndex = result?.groups.findIndex((item) => item.name === group.name) ?? -1;
-          return (
-            <article
-              className="group"
-              key={group.name}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                const payload = JSON.parse(event.dataTransfer.getData("application/json")) as DragPayload;
-                moveImage(payload, realGroupIndex);
-              }}
-            >
-              <header>
-                <label className="group-check">
-                  <input type="checkbox" checked={selectedGroups.has(group.name)} onChange={() => toggleGroup(group.name)} />
-                  <span>{group.name}</span>
-                </label>
-                <span>{group.count} images</span>
-              </header>
-              <div className="grid">
-                {group.images.map((image, imageIndex) => (
-                  <figure
-                    key={`${group.name}-${image.source_path}`}
-                    draggable
-                    className={selectedImages.has(image.source_path) ? "selected" : ""}
-                    onClick={() => toggleImage(image)}
-                    onDoubleClick={() => setPreview({ groupName: group.name, image })}
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData("application/json", JSON.stringify({ groupIndex: realGroupIndex, imageIndex }));
-                    }}
-                  >
-                    {project && <img src={imageUrl(project.id, image.source_path)} alt={image.filename} loading="lazy" />}
-                    <figcaption title={image.filename}>{image.filename}</figcaption>
-                  </figure>
-                ))}
-              </div>
-            </article>
-          );
-        })}
+          {!result && <div className="empty">Run AI to generate grouped image sets.</div>}
+          {visibleGroups.map((group) => {
+            const realGroupIndex = result?.groups.findIndex((item) => item.name === group.name) ?? -1;
+            return (
+              <article
+                className="group"
+                key={group.name}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  const payload = JSON.parse(event.dataTransfer.getData("application/json")) as DragPayload;
+                  moveImage(payload, realGroupIndex);
+                }}
+              >
+                <header>
+                  <label className="group-check">
+                    <input type="checkbox" checked={selectedGroups.has(group.name)} onChange={() => toggleGroup(group.name)} />
+                    <span>{group.name}</span>
+                  </label>
+                  <span>{group.count} images</span>
+                </header>
+                <div className="grid">
+                  {group.images.map((image, imageIndex) => (
+                    <figure
+                      key={`${group.name}-${image.source_path}`}
+                      draggable
+                      className={selectedImages.has(image.source_path) ? "selected" : ""}
+                      onClick={() => toggleImage(image)}
+                      onDoubleClick={() => setPreview({ groupName: group.name, image })}
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("application/json", JSON.stringify({ groupIndex: realGroupIndex, imageIndex }));
+                      }}
+                    >
+                      {project && <img src={imageUrl(project.id, image.source_path)} alt={image.filename} loading="lazy" />}
+                      <figcaption title={image.filename}>{image.filename}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
+        </section>
       </section>
 
       {preview && project && (

@@ -9,6 +9,8 @@ import cv2
 import numpy as np
 
 from controller import IMG, a_hash, classification, sift_ahash
+from ai_embedding import ai_embedding, ai_embedding_metadata
+from embedding_cache import embedding_cache
 from feature_cache import feature_cache
 from image_embedding import image_embedding
 from image_matcher import get_match_settings
@@ -20,9 +22,14 @@ class MatchCancelled(Exception):
     pass
 
 
-def scan_images(input_paths, progress=None, should_cancel=None, lazy_features=False):
+AI_MODES = {"ai", "ai-hybrid", "ai-trained"}
+LAZY_FEATURE_MODES = {"hybrid", "turbo", "ann", *AI_MODES}
+
+
+def scan_images(input_paths, progress=None, should_cancel=None, lazy_features=False, use_ai=False):
     start = time.time()
     feature_cache.reset_stats()
+    embedding_cache.reset_stats()
     image_files = collect_image_files(input_paths)
     loaded_items = []
     skipped = []
@@ -45,7 +52,10 @@ def scan_images(input_paths, progress=None, should_cancel=None, lazy_features=Fa
         else:
             item.create_sift()
             item.features_ready = True
-        item.embedding = image_embedding(item.img, item.hash_str)
+        if use_ai:
+            item.embedding = ai_embedding(item.img, item.name, item.hash_str)
+        else:
+            item.embedding = image_embedding(item.img, item.hash_str)
         return index, item
 
     if total:
@@ -76,8 +86,12 @@ def scan_images(input_paths, progress=None, should_cancel=None, lazy_features=Fa
             "cache_hits": feature_cache.hits,
             "cache_misses": feature_cache.misses,
             "cache_writes": feature_cache.writes,
+            "embedding_cache_hits": embedding_cache.hits,
+            "embedding_cache_misses": embedding_cache.misses,
+            "embedding_cache_writes": embedding_cache.writes,
             "lazy_features": lazy_features,
             "parallel_scan_workers": max_workers,
+            **(ai_embedding_metadata() if use_ai else {}),
         },
     }
 
@@ -95,6 +109,7 @@ def match_images(images, mode="fast", progress=None, should_cancel=None, stats_c
     total = len(images)
     stats = {
         "mode": mode,
+        "ai_enabled": mode in AI_MODES,
         "candidate_rejects": 0,
         "hash_candidates_considered": 0,
         "embedding_candidates": 0,
