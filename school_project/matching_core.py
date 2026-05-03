@@ -112,7 +112,7 @@ def match_images(images, mode="fast", progress=None, should_cancel=None, stats_c
         "images_per_second": 0.0,
         "eta_seconds": None,
     }
-    max_workers = 1 if settings.max_sift_candidates is not None else min(4, max(1, (os.cpu_count() or 2) - 1))
+    max_workers = min(4, max(1, (os.cpu_count() or 2) - 1))
     last_stats_emit = [0.0]
 
     def emit_stats(force=False):

@@ -23,10 +23,11 @@ import "./styles.css";
 
 type DragPayload = { groupIndex: number; imageIndex: number };
 type PreviewState = { groupName: string; image: ResultImage };
-type MatchMode = "strict" | "standard" | "loose" | "fast" | "turbo" | "ann";
+type MatchMode = "strict" | "standard" | "loose" | "fast" | "hybrid" | "turbo" | "ann";
 
 const UPLOAD_BATCH_SIZE = 500;
 const MATCH_MODES: { value: MatchMode; label: string }[] = [
+  { value: "hybrid", label: "Hybrid Match" },
   { value: "standard", label: "SIFT Match" },
   { value: "strict", label: "Strict SIFT" },
   { value: "loose", label: "Loose SIFT" },
@@ -62,7 +63,7 @@ function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [result, setResult] = useState<MatchResponse | null>(null);
   const [status, setStatus] = useState("Backend ready. Create or load a project.");
-  const [matchMode, setMatchMode] = useState<MatchMode>("standard");
+  const [matchMode, setMatchMode] = useState<MatchMode>("hybrid");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);

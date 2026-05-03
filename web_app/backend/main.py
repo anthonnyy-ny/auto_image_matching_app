@@ -159,7 +159,7 @@ def run_match_job(job_id: str, project_id: str, mode: str):
                 + " groups"
             )
 
-        scan_result = scan_images(images, scan_progress, should_cancel, lazy_features=(mode in {"turbo", "ann"}))
+        scan_result = scan_images(images, scan_progress, should_cancel, lazy_features=(mode in {"hybrid", "turbo", "ann"}))
         match_result = match_images(scan_result["images"], mode, match_progress, should_cancel, match_stats)
         groups = serialize_groups(match_result["groups"])
         stats = {
@@ -258,7 +258,7 @@ def match_project(project_id: str, payload: MatchRequest):
     if not images:
         raise HTTPException(status_code=400, detail="Project has no images")
 
-    scan_result = scan_images(images, lazy_features=(payload.mode in {"turbo", "ann"}))
+    scan_result = scan_images(images, lazy_features=(payload.mode in {"hybrid", "turbo", "ann"}))
     match_result = match_images(scan_result["images"], payload.mode)
     groups = serialize_groups(match_result["groups"])
     stats = {

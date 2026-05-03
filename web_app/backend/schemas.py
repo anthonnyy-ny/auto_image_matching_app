@@ -18,7 +18,7 @@ class ProjectResponse(BaseModel):
 
 
 class MatchRequest(BaseModel):
-    mode: Literal["strict", "standard", "loose", "fast", "turbo", "ann"] = "standard"
+    mode: Literal["strict", "standard", "loose", "fast", "hybrid", "turbo", "ann"] = "hybrid"
 
 
 class ResultImage(BaseModel):

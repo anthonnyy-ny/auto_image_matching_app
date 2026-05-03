@@ -12,6 +12,7 @@ class VectorCandidateIndex:
         self._matrix = None
         self._dirty = True
         self._hnsw = None
+        self._hnsw_capacity = 0
         self.backend = "numpy"
         try:
             import hnswlib
@@ -27,9 +28,13 @@ class VectorCandidateIndex:
         vector = np.asarray(vector, dtype=np.float32)
         if vector.shape[0] != self.dim:
             return
+        item_index = len(self.labels)
         self.labels.append(label)
         self.vectors.append(vector)
-        if self._matrix is not None and not self._dirty and self.backend == "numpy":
+        if self._hnsw is not None and not self._dirty and self.backend == "hnswlib":
+            self._ensure_hnsw_capacity(len(self.labels))
+            self._hnsw.add_items(vector.reshape(1, -1), np.array([item_index]))
+        elif self._matrix is not None and not self._dirty and self.backend == "numpy":
             self._matrix = np.vstack([self._matrix, vector.reshape(1, -1)]).astype(np.float32, copy=False)
         else:
             self._dirty = True
@@ -38,6 +43,8 @@ class VectorCandidateIndex:
         self.labels = list(labels)
         self.vectors = [np.asarray(vector, dtype=np.float32) for vector in vectors]
         self._dirty = True
+        self._hnsw = None
+        self._hnsw_capacity = 0
 
     def query(self, vector, top_k):
         if not self.labels or top_k <= 0:
@@ -70,8 +77,15 @@ class VectorCandidateIndex:
         if self._dirty or self._hnsw is None:
             matrix = self._matrix_view()
             self._hnsw = self._hnswlib.Index(space=self.space, dim=self.dim)
-            self._hnsw.init_index(max_elements=len(self.labels), ef_construction=120, M=16)
+            self._hnsw_capacity = max(256, len(self.labels) * 2)
+            self._hnsw.init_index(max_elements=self._hnsw_capacity, ef_construction=120, M=16)
             self._hnsw.add_items(matrix, np.arange(len(self.labels)))
-            self._hnsw.set_ef(max(32, top_k * 3))
+        self._hnsw.set_ef(max(32, top_k * 3))
         ids, distances = self._hnsw.knn_query(vector.reshape(1, -1), k=top_k)
         return [(self.labels[int(index)], float(distance)) for index, distance in zip(ids[0], distances[0])]
+
+    def _ensure_hnsw_capacity(self, needed):
+        if self._hnsw is None or needed <= self._hnsw_capacity:
+            return
+        self._hnsw_capacity = max(needed, self._hnsw_capacity * 2)
+        self._hnsw.resize_index(self._hnsw_capacity)

@@ -28,6 +28,17 @@ MATCH_SETTINGS = {
         full_hash_prefilter=True,
         full_hash_reject_threshold=48,
     ),
+    "hybrid": MatchSettings(
+        "hybrid",
+        crop_hash_threshold=10,
+        full_hash_prefilter=True,
+        full_hash_reject_threshold=50,
+        hash_candidate_threshold=44,
+        max_sift_candidates=24,
+        nearest_fallback_candidates=8,
+        embedding_top_k=64,
+        hash_auto_match_threshold=5,
+    ),
     "turbo": MatchSettings(
         "turbo",
         crop_hash_threshold=10,
