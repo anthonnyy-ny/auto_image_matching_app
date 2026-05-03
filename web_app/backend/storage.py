@@ -15,8 +15,15 @@ from image_utils import SUPPORTED_IMAGE_EXTENSIONS
 RUNTIME_DIR = web_runtime_dir()
 PROJECTS_DIR = RUNTIME_DIR / "projects"
 UPLOADS_DIR = RUNTIME_DIR / "uploads"
+MAX_ZIP_IMAGE_FILES = 10000
+MAX_ZIP_UNCOMPRESSED_BYTES = 2 * 1024 * 1024 * 1024
+MAX_ZIP_MEMBER_BYTES = 200 * 1024 * 1024
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+class UploadLimitError(ValueError):
+    pass
 
 
 def create_project(name=None):
@@ -68,14 +75,15 @@ def save_project_state(state):
 
 
 def import_project_state(payload):
+    groups = payload.get("groups") or payload.get("results") or []
     state = create_project(payload.get("name") or "Imported project")
     state["images"] = []
-    for group in payload.get("groups", payload.get("results", [])):
+    for group in groups:
         for image in group.get("images", []):
             source_path = image.get("source_path")
             if source_path and Path(source_path).exists():
                 state["images"].append(source_path)
-    state["results"] = payload.get("groups", payload.get("results", []))
+    state["results"] = groups
     state["stats"] = payload.get("stats", {})
     save_project_state(state)
     return state
@@ -135,6 +143,7 @@ def save_uploads(project_id, upload_files):
 def _save_zip_upload(upload_dir, upload_file, existing_names):
     saved = []
     with zipfile.ZipFile(upload_file.file) as archive:
+        _validate_zip_upload(archive)
         for info in archive.infolist():
             if info.is_dir():
                 continue
@@ -155,6 +164,27 @@ def _save_zip_upload(upload_dir, upload_file, existing_names):
             existing_names.add(target.name.lower())
             saved.append(str(target))
     return saved
+
+
+def _validate_zip_upload(archive):
+    image_count = 0
+    total_size = 0
+    for info in archive.infolist():
+        if info.is_dir():
+            continue
+        source_name = Path(info.filename).name
+        if not source_name:
+            continue
+        if Path(source_name).suffix.lower() not in SUPPORTED_IMAGE_EXTENSIONS:
+            continue
+        image_count += 1
+        total_size += info.file_size
+        if image_count > MAX_ZIP_IMAGE_FILES:
+            raise UploadLimitError("ZIP contains too many image files")
+        if info.file_size > MAX_ZIP_MEMBER_BYTES:
+            raise UploadLimitError("ZIP contains an image file that is too large")
+        if total_size > MAX_ZIP_UNCOMPRESSED_BYTES:
+            raise UploadLimitError("ZIP uncompressed image data is too large")
 
 
 def export_results_zip(state):

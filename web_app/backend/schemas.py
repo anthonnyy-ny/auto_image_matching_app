@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, StrictInt, StrictStr
 
 
 class ProjectCreate(BaseModel):
@@ -18,7 +18,24 @@ class ProjectResponse(BaseModel):
 
 
 class MatchRequest(BaseModel):
-    mode: str = "fast"
+    mode: Literal["strict", "standard", "loose", "fast", "turbo", "ann"] = "standard"
+
+
+class ResultImage(BaseModel):
+    filename: StrictStr
+    source_path: StrictStr
+
+    class Config:
+        extra = "forbid"
+
+
+class ResultGroup(BaseModel):
+    name: StrictStr
+    count: StrictInt
+    images: List[ResultImage]
+
+    class Config:
+        extra = "forbid"
 
 
 class MatchResponse(BaseModel):
@@ -26,11 +43,21 @@ class MatchResponse(BaseModel):
     group_count: int
     elapsed: float
     stats: Dict[str, Any]
-    groups: List[Dict[str, Any]]
+    groups: List[ResultGroup]
 
 
 class ResultsUpdate(BaseModel):
-    groups: List[Dict[str, Any]]
+    groups: List[ResultGroup]
+
+
+class ProjectImport(BaseModel):
+    name: Optional[str] = None
+    groups: Optional[List[ResultGroup]] = None
+    results: Optional[List[ResultGroup]] = None
+    stats: Dict[str, Any] = Field(default_factory=dict)
+
+    class Config:
+        extra = "ignore"
 
 
 class JobResponse(BaseModel):

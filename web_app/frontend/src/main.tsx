@@ -23,8 +23,17 @@ import "./styles.css";
 
 type DragPayload = { groupIndex: number; imageIndex: number };
 type PreviewState = { groupName: string; image: ResultImage };
+type MatchMode = "strict" | "standard" | "loose" | "fast" | "turbo" | "ann";
 
 const UPLOAD_BATCH_SIZE = 500;
+const MATCH_MODES: { value: MatchMode; label: string }[] = [
+  { value: "standard", label: "SIFT Match" },
+  { value: "strict", label: "Strict SIFT" },
+  { value: "loose", label: "Loose SIFT" },
+  { value: "fast", label: "Fast SIFT" },
+  { value: "turbo", label: "Turbo SIFT" },
+  { value: "ann", label: "Vector Grouping" },
+];
 
 function cloneGroups(groups: ResultGroup[]) {
   return groups.map((group) => ({ ...group, images: [...group.images] }));
@@ -53,6 +62,7 @@ function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [result, setResult] = useState<MatchResponse | null>(null);
   const [status, setStatus] = useState("Backend ready. Create or load a project.");
+  const [matchMode, setMatchMode] = useState<MatchMode>("standard");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -93,7 +103,7 @@ function App() {
     };
     const skipped = Array.isArray(stats.skipped) ? stats.skipped.length : 0;
     return [
-      ["Groups", result?.group_count ?? 0],
+      ["Match sets", result?.group_count ?? 0],
       ["Images", totalImages],
       ["Backend", match.vector_backend ?? "none"],
       ["Current Img", match.current_image ?? 0],
@@ -217,9 +227,9 @@ function App() {
     if (!project) return;
     setBusy(true);
     setProgress(0);
-    setStatus("Match job queued...");
+    setStatus("Image match job queued...");
     try {
-      const job = await startMatchJob(project.id, "ann");
+      const job = await startMatchJob(project.id, matchMode);
       setActiveJobId(job.job_id);
       if (pollTimer.current) window.clearInterval(pollTimer.current);
       pollTimer.current = window.setInterval(async () => {
@@ -235,7 +245,7 @@ function App() {
             setBusy(false);
             setActiveJobId(null);
             setProgress(100);
-            setStatus(`Done: ${state.result.group_count} groups, ${state.result.elapsed.toFixed(2)} seconds.`);
+            setStatus(`Done: ${state.result.group_count} match sets, ${state.result.elapsed.toFixed(2)} seconds.`);
             refreshProjects();
           }
           if (state.status === "failed" || state.status === "cancelled") {
@@ -364,7 +374,7 @@ function App() {
         <div>
           <p className="eyebrow">AI Image Matching Web</p>
           <h1>Auto Similar Image Organizer</h1>
-          <p>Upload thousands of images, classify them, review groups, correct mistakes, and export ordered results.</p>
+          <p>Upload images, run SIFT image matching, review matched sets, correct mistakes, and export ordered results.</p>
         </div>
         <div className="stats">
           <span>{project ? "Project Ready" : "No Project"}</span>
@@ -393,6 +403,11 @@ function App() {
           <label>Upload / Restore</label>
           <input className="file" type="file" accept="image/*,.zip" multiple disabled={!project || busy} onChange={(event) => handleUpload(event.target.files)} />
           <input className="file" type="file" accept="application/json" disabled={busy} onChange={(event) => handleImport(event.target.files?.[0] ?? null)} />
+          <select value={matchMode} disabled={busy} onChange={(event) => setMatchMode(event.target.value as MatchMode)}>
+            {MATCH_MODES.map((mode) => (
+              <option key={mode.value} value={mode.value}>{mode.label}</option>
+            ))}
+          </select>
           <div className="row">
             <button className="wide" onClick={handleMatch} disabled={!project || !project.image_count || busy}>Start Match</button>
             <button className="wide ghost" onClick={handleCancel} disabled={!activeJobId}>Cancel</button>
@@ -428,10 +443,10 @@ function App() {
 
       <section className="results">
         <div className="section-title">
-          <h2>Groups</h2>
-          <span>{result ? `${visibleGroups.length}/${result.group_count} groups` : "Waiting"}</span>
+          <h2>Match Results</h2>
+          <span>{result ? `${visibleGroups.length}/${result.group_count} match sets` : "Waiting"}</span>
         </div>
-        {!result && <div className="empty">After matching, grouped images will appear here.</div>}
+        {!result && <div className="empty">After image matching, matched image sets will appear here.</div>}
         {visibleGroups.map((group) => {
           const realGroupIndex = result?.groups.findIndex((item) => item.name === group.name) ?? -1;
           return (

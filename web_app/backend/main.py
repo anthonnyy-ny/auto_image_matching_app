@@ -6,6 +6,7 @@ import time
 import uuid
 from pathlib import Path
 import shutil
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHOOL_PROJECT = ROOT / "school_project"
@@ -16,16 +17,17 @@ for path in (ROOT, SCHOOL_PROJECT):
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from pydantic import ValidationError
 
 from app_paths import feature_cache_dir, thumbnail_cache_dir
 from matching_core import MatchCancelled, match_images, scan_images, serialize_groups
 
 try:
-    from .schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectResponse, ResultsUpdate
-    from .storage import create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
+    from .schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
+    from .storage import UploadLimitError, create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
 except ImportError:
-    from schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectResponse, ResultsUpdate
-    from storage import create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
+    from schemas import JobResponse, MatchRequest, MatchResponse, ProjectCreate, ProjectImport, ProjectResponse, ResultsUpdate
+    from storage import UploadLimitError, create_project, export_results_zip, import_project_state, list_project_states, load_project_state, save_project_state, save_uploads, state_path
 
 
 app = FastAPI(title="Auto Image Matching Web API", version="0.1.0")
@@ -38,6 +40,27 @@ app.add_middleware(
 )
 
 JOBS = {}
+
+
+def model_to_dict(model):
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
+
+
+def normalize_result_groups(groups):
+    normalized = []
+    for group in groups:
+        group_dict = model_to_dict(group)
+        group_dict["count"] = len(group_dict["images"])
+        normalized.append(group_dict)
+    return normalized
+
+
+def parse_project_import(payload):
+    if hasattr(ProjectImport, "model_validate"):
+        return ProjectImport.model_validate(payload)
+    return ProjectImport.parse_obj(payload)
 
 
 def project_response(state):
@@ -77,7 +100,12 @@ def get_project_api(project_id: str):
 def upload_images(project_id: str, files: list[UploadFile] = File(...)):
     if load_project_state(project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
-    paths = save_uploads(project_id, files)
+    try:
+        paths = save_uploads(project_id, files)
+    except UploadLimitError as exc:
+        raise HTTPException(status_code=413, detail=str(exc))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Invalid ZIP file")
     state = load_project_state(project_id)
     return {"project_id": project_id, "uploaded": len(paths), "image_count": len(state.get("images", [])), "paths": paths}
 
@@ -267,7 +295,7 @@ def update_project_results(project_id: str, payload: ResultsUpdate):
     state = load_project_state(project_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Project not found")
-    state["results"] = payload.groups
+    state["results"] = normalize_result_groups(payload.groups)
     save_project_state(state)
     return {"project_id": project_id, "groups": state["results"]}
 
@@ -293,9 +321,15 @@ def download_project_file(project_id: str):
 def import_project(file: UploadFile = File(...)):
     try:
         import json
-        payload = json.load(file.file)
-        state = import_project_state(payload)
+        payload = parse_project_import(json.load(file.file))
+        payload_dict = model_to_dict(payload)
+        groups = normalize_result_groups(payload.groups or payload.results or [])
+        payload_dict["groups"] = groups
+        payload_dict["results"] = groups
+        state = import_project_state(payload_dict)
         return project_response(state)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors())
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
