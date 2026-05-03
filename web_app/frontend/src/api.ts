@@ -38,6 +38,23 @@ export type JobState = {
   error?: string;
 };
 
+export type AiStatus = {
+  ai_backend: string;
+  ai_model: string;
+  ai_model_source?: string;
+  ai_status?: string;
+  ai_ready?: boolean;
+  ai_device?: string;
+  ai_framework?: string;
+  ai_allow_download?: boolean;
+  ai_last_error?: string | null;
+  embedding_dim?: number;
+  ai_cache_hits?: number;
+  ai_cache_misses?: number;
+  ai_cache_writes?: number;
+  available_models?: { id: string; source: string; recommended?: boolean }[];
+};
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, options);
   if (!response.ok) {
@@ -98,6 +115,14 @@ export function cancelJob(jobId: string) {
 
 export function clearCache() {
   return request<{ removed_files: number; removed_bytes: number }>("/api/cache/clear", { method: "POST" });
+}
+
+export function getAiStatus() {
+  return request<AiStatus>("/api/ai/status");
+}
+
+export function reloadAi() {
+  return request<AiStatus>("/api/ai/reload", { method: "POST" });
 }
 
 export function getResults(projectId: string) {

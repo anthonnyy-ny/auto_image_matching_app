@@ -1,5 +1,6 @@
 torch>=2.2
 torchvision>=0.17
 pillow>=10.0
-open-clip-torch>=2.24
 transformers>=4.40
+accelerate>=0.29
+safetensors>=0.4

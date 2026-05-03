@@ -20,6 +20,8 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
 from app_paths import feature_cache_dir, thumbnail_cache_dir
+from ai_embedding import ai_embedding_metadata, reload_ai_embedding
+from embedding_cache import embedding_cache
 from matching_core import LAZY_FEATURE_MODES, AI_MODES, MatchCancelled, match_images, scan_images, serialize_groups
 
 try:
@@ -76,6 +78,16 @@ def project_response(state):
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/api/ai/status")
+def ai_status():
+    return ai_embedding_metadata()
+
+
+@app.post("/api/ai/reload")
+def ai_reload():
+    return reload_ai_embedding()
 
 
 @app.post("/api/projects", response_model=ProjectResponse)
@@ -232,7 +244,7 @@ def cancel_job(job_id: str):
 def clear_cache():
     removed_files = 0
     removed_bytes = 0
-    for cache_dir in (thumbnail_cache_dir(), feature_cache_dir()):
+    for cache_dir in (thumbnail_cache_dir(), feature_cache_dir(), embedding_cache.cache_dir):
         if not cache_dir.exists():
             continue
         for path in cache_dir.rglob("*"):

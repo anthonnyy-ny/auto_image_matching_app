@@ -6,12 +6,15 @@ import {
   createProject,
   exportUrl,
   getJob,
+  getAiStatus,
   getResults,
   imageUrl,
   importProject,
   listProjects,
   projectFileUrl,
   startMatchJob,
+  reloadAi,
+  type AiStatus,
   type MatchResponse,
   type Project,
   type ResultGroup,
@@ -71,6 +74,7 @@ function App() {
   const [progress, setProgress] = useState(0);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [liveMetrics, setLiveMetrics] = useState<Record<string, unknown>>({});
+  const [aiStatus, setAiStatus] = useState<AiStatus | null>(null);
   const [filter, setFilter] = useState("");
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
@@ -79,6 +83,7 @@ function App() {
 
   useEffect(() => {
     refreshProjects();
+    refreshAiStatus();
     return () => {
       if (pollTimer.current) window.clearInterval(pollTimer.current);
     };
@@ -109,8 +114,9 @@ function App() {
     return [
       ["Sets", result?.group_count ?? 0],
       ["Images", totalImages],
-      ["AI", scan.ai_backend ?? match.ai_backend ?? "ready"],
-      ["Model", scan.ai_model ?? match.ai_model ?? match.vector_backend ?? "classic"],
+      ["AI", scan.ai_backend ?? match.ai_backend ?? aiStatus?.ai_backend ?? "ready"],
+      ["Model", scan.ai_model ?? match.ai_model ?? aiStatus?.ai_model ?? match.vector_backend ?? "classic"],
+      ["Framework", scan.ai_framework ?? aiStatus?.ai_framework ?? "classic"],
       ["Current", match.current_image ?? 0],
       ["Processed", match.processed_images ?? 0],
       ["Groups", match.current_groups ?? 0],
@@ -125,7 +131,7 @@ function App() {
       ["Rejected", match.candidate_rejects ?? 0],
       ["Skipped", skipped],
     ];
-  }, [result, totalImages, liveMetrics]);
+  }, [result, totalImages, liveMetrics, aiStatus]);
 
   function setGroups(groups: ResultGroup[]) {
     if (!result) return;
@@ -373,6 +379,32 @@ function App() {
     setSelectedGroups(next);
   }
 
+  async function refreshAiStatus() {
+    try {
+      setAiStatus(await getAiStatus());
+    } catch (error) {
+      setAiStatus({
+        ai_backend: "unavailable",
+        ai_model: "unknown",
+        ai_status: String(error),
+        ai_ready: false,
+      });
+    }
+  }
+
+  async function handleReloadAi() {
+    setBusy(true);
+    try {
+      const response = await reloadAi();
+      setAiStatus(response);
+      setStatus(response.ai_status || "AI model reloaded.");
+    } catch (error) {
+      setStatus(String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const currentModeLabel = MATCH_MODES.find((mode) => mode.value === matchMode)?.label ?? "AI Hybrid";
   const recentProjects = projects.slice(0, 6);
 
@@ -469,6 +501,23 @@ function App() {
               <input className="file" type="file" accept="application/json" disabled={busy} onChange={(event) => handleImport(event.target.files?.[0] ?? null)} />
               {project && <a className="button" href={projectFileUrl(project.id)}>Project JSON</a>}
               {project && <a className="button" href={exportUrl(project.id)}>Export ZIP</a>}
+            </div>
+          </article>
+
+          <article className="project-panel">
+            <div className="section-title">
+              <h2>AI solution</h2>
+              <span>{aiStatus?.ai_ready ? "Neural" : "Fallback"}</span>
+            </div>
+            <div className="ai-card">
+              <strong>{aiStatus?.ai_model ?? "Loading model status..."}</strong>
+              <span>{aiStatus?.ai_framework ?? "framework pending"}</span>
+              <p>{aiStatus?.ai_status ?? "Checking Hugging Face encoder."}</p>
+              {aiStatus?.ai_last_error && <small>{aiStatus.ai_last_error}</small>}
+            </div>
+            <div className="panel-actions">
+              <button onClick={refreshAiStatus} disabled={busy}>Refresh AI</button>
+              <button onClick={handleReloadAi} disabled={busy}>Reload model</button>
             </div>
           </article>
 

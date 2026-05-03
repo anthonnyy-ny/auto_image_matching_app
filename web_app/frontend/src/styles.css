@@ -397,7 +397,7 @@ button:disabled {
 
 .project-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+  grid-template-columns: minmax(0, 1fr) repeat(2, minmax(260px, 0.72fr));
   gap: 14px;
   margin-top: 18px;
 }
@@ -455,6 +455,46 @@ button:disabled {
 .project-row small {
   color: #8e857e;
   white-space: nowrap;
+}
+
+.ai-card {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #f0e8e0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff, #fff8f1);
+}
+
+.ai-card strong {
+  color: #18181b;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.ai-card span {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f4eee7;
+  color: #6f6259;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ai-card p,
+.ai-card small {
+  margin: 0;
+  color: #736b65;
+  line-height: 1.4;
+}
+
+.ai-card small {
+  display: block;
+  max-height: 70px;
+  overflow: auto;
+  font-size: 12px;
 }
 
 .toolbar {
