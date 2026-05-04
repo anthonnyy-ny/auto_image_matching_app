@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   askAssistant,
@@ -29,29 +29,6 @@ type DragPayload = { groupIndex: number; imageIndex: number };
 type PreviewState = { groupName: string; image: ResultImage };
 type MatchMode = "strict" | "standard" | "loose" | "fast" | "hybrid" | "turbo" | "ann" | "ai" | "ai-hybrid" | "ai-trained";
 type ChatMessage = { role: "assistant" | "user"; text: string };
-type SpotlightItem = {
-  title: string;
-  creator: string;
-  category: string;
-  viewers: string;
-  description: string;
-  tone: string;
-};
-type FooterLinkGroup = {
-  title: string;
-  links: { label: string; href: string; external?: boolean }[];
-};
-type MotionWallItem = {
-  title: string;
-  text: string;
-  tag: string;
-  metric: string;
-  tone: string;
-};
-type FaqItem = {
-  question: string;
-  answer: string;
-};
 
 const UPLOAD_BATCH_SIZE = 500;
 const MATCH_MODES: { value: MatchMode; label: string }[] = [
@@ -65,155 +42,6 @@ const MATCH_MODES: { value: MatchMode; label: string }[] = [
   { value: "fast", label: "Fast SIFT" },
   { value: "turbo", label: "Turbo SIFT" },
   { value: "ann", label: "Vector Grouping" },
-];
-
-const SPOTLIGHT_ITEMS: SpotlightItem[] = [
-  {
-    title: "Duplicate discovery live run",
-    creator: "AI Matching Studio",
-    category: "Image Intelligence",
-    viewers: "1.8K reviewing",
-    description: "Watch incoming images separate into confident match sets while the model keeps near-duplicates within reach.",
-    tone: "sunrise",
-  },
-  {
-    title: "Visual cluster audit",
-    creator: "Guardian Workspace",
-    category: "Quality Control",
-    viewers: "924 checking",
-    description: "Flip through groups, inspect edge cases, and move uncertain images without breaking your project flow.",
-    tone: "mint",
-  },
-  {
-    title: "AI vector comparison",
-    creator: "Hybrid Matcher",
-    category: "Neural Search",
-    viewers: "2.4K matching",
-    description: "Classic features and AI embeddings work side by side for faster, cleaner image organization.",
-    tone: "violet",
-  },
-  {
-    title: "Export-ready results",
-    creator: "Project Delivery",
-    category: "Batch Workflow",
-    viewers: "638 exporting",
-    description: "Confirm your final sets, save corrections, and package matched files for handoff in one place.",
-    tone: "coral",
-  },
-];
-
-const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
-  {
-    title: "Product",
-    links: [
-      { label: "Projects", href: "#projects" },
-      { label: "Matched Sets", href: "#results" },
-      { label: "Exports", href: "#exports" },
-      { label: "AI Status", href: "#home" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About AI Matcher", href: "#home" },
-      { label: "Brand Assets", href: "#home" },
-      { label: "Terms", href: "#home" },
-      { label: "Privacy", href: "#home" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Documentation", href: "#projects" },
-      { label: "Beginner Guide", href: "#home" },
-      { label: "Model Notes", href: "#projects" },
-      { label: "Support", href: "#home" },
-    ],
-  },
-];
-
-const SOCIAL_LINKS = [
-  { label: "GitHub", logo: "GH", href: "https://github.com/" },
-  { label: "X", logo: "X", href: "https://x.com/" },
-  { label: "LinkedIn", logo: "in", href: "https://www.linkedin.com/" },
-  { label: "Discord", logo: "DC", href: "https://discord.com/" },
-];
-
-const MOTION_WALL_ITEMS: MotionWallItem[] = [
-  {
-    title: "Upload folders or ZIPs",
-    text: "Bring in a full image batch and let the workspace keep progress visible while files are processed.",
-    tag: "Input",
-    metric: "500/file batch",
-    tone: "sunrise",
-  },
-  {
-    title: "AI-assisted grouping",
-    text: "Hybrid matching blends classic image features with embeddings for cleaner duplicate discovery.",
-    tag: "Matching",
-    metric: "AI Hybrid",
-    tone: "violet",
-  },
-  {
-    title: "Drag corrections",
-    text: "Move images between sets, merge groups, and remove outliers before saving the final project state.",
-    tag: "Review",
-    metric: "Manual QA",
-    tone: "mint",
-  },
-  {
-    title: "Export results",
-    text: "Package corrected match sets into a ZIP or keep the project JSON for future review.",
-    tag: "Delivery",
-    metric: "ZIP + JSON",
-    tone: "coral",
-  },
-  {
-    title: "Model visibility",
-    text: "Check backend, framework, model source, cache hits, and live job metrics without leaving the page.",
-    tag: "Ops",
-    metric: "Live status",
-    tone: "sunrise",
-  },
-  {
-    title: "Beginner support",
-    text: "The assistant panel keeps common workflow questions close while the user learns the matching process.",
-    tag: "Help",
-    metric: "Guided",
-    tone: "mint",
-  },
-];
-
-const FAQ_ITEMS: FaqItem[] = [
-  {
-    question: "What kind of images can I upload?",
-    answer: "You can upload individual image files or ZIP archives. For larger projects, the app processes files in batches so the interface stays responsive.",
-  },
-  {
-    question: "Which matching mode should I start with?",
-    answer: "AI Hybrid is the best first choice because it balances neural similarity with classic feature matching. You can switch to faster or stricter modes when your dataset needs it.",
-  },
-  {
-    question: "Can I fix groups after the AI finishes?",
-    answer: "Yes. Select images, drag them between groups, create new sets, merge selected groups, remove outliers, and then save the corrected result.",
-  },
-  {
-    question: "Where does my project data go?",
-    answer: "Projects are stored in the local workspace for this app. You can export results as a ZIP or download the project JSON for backup and review.",
-  },
-  {
-    question: "Why does the AI status say fallback?",
-    answer: "Fallback means the AI model is not currently available, so the app relies on classic matching. Use Refresh AI or Reload model after checking the backend environment.",
-  },
-];
-
-const PROMPT_SUGGESTIONS = [
-  "Create a new image classification project and prepare upload",
-  "Upload images, then run AI Hybrid matching",
-  "Review duplicate groups and help me fix mistakes",
-  "Show model status, cache metrics, and run progress",
-  "Export corrected match sets as ZIP and project JSON",
-  "Explain this workflow step by step for a beginner",
 ];
 
 function cloneGroups(groups: ResultGroup[]) {
@@ -239,8 +67,6 @@ function formatBytes(bytes: number) {
 
 function App() {
   const [projectName, setProjectName] = useState("AI Matching Studio");
-  const [commandPrompt, setCommandPrompt] = useState("");
-  const [commandSubmitted, setCommandSubmitted] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [result, setResult] = useState<MatchResponse | null>(null);
@@ -258,10 +84,6 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
-  const [activeSpotlight, setActiveSpotlight] = useState(0);
-  const [footerLanguage, setFooterLanguage] = useState("zh-Hant");
-  const [footerRegion, setFooterRegion] = useState("TW");
-  const [openFaq, setOpenFaq] = useState(0);
   const [chatSuggestions, setChatSuggestions] = useState(["怎么上传图片？", "为什么 AI 是 Fallback？", "怎么导出分组结果？"]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -277,13 +99,6 @@ function App() {
     return () => {
       if (pollTimer.current) window.clearInterval(pollTimer.current);
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setActiveSpotlight((index) => (index + 1) % SPOTLIGHT_ITEMS.length);
-    }, 6500);
-    return () => window.clearInterval(timer);
   }, []);
 
   const totalImages = useMemo(
@@ -336,15 +151,6 @@ function App() {
     setResult({ ...result, group_count: normalized.length, groups: normalized });
   }
 
-  function submitCommand(prompt = commandPrompt) {
-    const text = prompt.trim();
-    if (!text) return;
-    setCommandPrompt(text);
-    setCommandSubmitted(true);
-    setProjectName(text.slice(0, 64));
-    setStatus("Instruction received. Create or load a project, upload images, then run matching.");
-  }
-
   async function refreshProjects() {
     try {
       setProjects(await listProjects());
@@ -361,7 +167,6 @@ function App() {
       const results = await getResults(projectId);
       setProject(selected);
       setProjectName(selected.name);
-      setCommandSubmitted(true);
       setSelectedImages(new Set());
       setSelectedGroups(new Set());
       setResult({
@@ -383,7 +188,6 @@ function App() {
     setBusy(true);
     try {
       const created = await createProject(projectName || "Web Classification");
-      setCommandSubmitted(true);
       setProject(created);
       setResult(null);
       setSelectedImages(new Set());
@@ -417,7 +221,6 @@ function App() {
 
   async function handleUpload(files: FileList | null) {
     if (!project || !files?.length) return;
-    setCommandSubmitted(true);
     setBusy(true);
     setProgress(0);
     try {
@@ -445,7 +248,6 @@ function App() {
 
   async function handleMatch() {
     if (!project) return;
-    setCommandSubmitted(true);
     setBusy(true);
     setProgress(0);
     setStatus("Image match job queued...");
@@ -641,7 +443,6 @@ function App() {
 
   const currentModeLabel = MATCH_MODES.find((mode) => mode.value === matchMode)?.label ?? "AI Hybrid";
   const recentProjects = projects.slice(0, 6);
-  const spotlight = SPOTLIGHT_ITEMS[activeSpotlight];
 
   return (
     <main className="app-shell">
@@ -701,107 +502,20 @@ function App() {
           </div>
         </header>
 
-        <section className="spotlight" aria-label="Featured video carousel">
-          <button
-            className="spotlight-arrow"
-            aria-label="Previous featured video"
-            onClick={() => setActiveSpotlight((index) => (index + SPOTLIGHT_ITEMS.length - 1) % SPOTLIGHT_ITEMS.length)}
-          >
-            {"<"}
-          </button>
-          <div className={`spotlight-stage tone-${spotlight.tone}`}>
-            <div className="spotlight-video" aria-hidden="true">
-              <div className="video-window">
-                <span className="live-pill">LIVE</span>
-                <div className="scan-line" />
-                <div className="video-grid-preview">
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </div>
-            </div>
-            <article className="spotlight-copy">
-              <span className="spotlight-kicker">{spotlight.category}</span>
-              <h2>{spotlight.title}</h2>
-              <strong>{spotlight.creator}</strong>
-              <p>{spotlight.description}</p>
-              <div className="spotlight-meta">
-                <span>{spotlight.viewers}</span>
-                <span>{currentModeLabel}</span>
-              </div>
-            </article>
-          </div>
-          <button
-            className="spotlight-arrow"
-            aria-label="Next featured video"
-            onClick={() => setActiveSpotlight((index) => (index + 1) % SPOTLIGHT_ITEMS.length)}
-          >
-            {">"}
-          </button>
-          <div className="spotlight-rail">
-            {SPOTLIGHT_ITEMS.map((item, index) => (
-              <button
-                className={index === activeSpotlight ? "spotlight-thumb active" : "spotlight-thumb"}
-                key={item.title}
-                onClick={() => setActiveSpotlight(index)}
-              >
-                <span className={`thumb-art tone-${item.tone}`} />
-                <span>
-                  <strong>{item.title}</strong>
-                  <small>{item.category}</small>
-                </span>
-              </button>
-            ))}
+        <section className="composer">
+          <input value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+          <div className="composer-actions">
+            <input className="file" type="file" accept="image/*,.zip" multiple disabled={!project || busy} onChange={(event) => handleUpload(event.target.files)} />
+            <select value={matchMode} disabled={busy} onChange={(event) => setMatchMode(event.target.value as MatchMode)}>
+              {MATCH_MODES.map((mode) => (
+                <option key={mode.value} value={mode.value}>{mode.label}</option>
+              ))}
+            </select>
+            <button onClick={handleCreate} disabled={busy}>Create</button>
+            <button className="primary" onClick={handleMatch} disabled={!project || !project.image_count || busy}>Run</button>
+            <button onClick={handleCancel} disabled={!activeJobId}>Cancel</button>
           </div>
         </section>
-
-        <section className={commandSubmitted ? "prompt-console compact" : "prompt-console"} aria-label="AI command prompt">
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitCommand();
-            }}
-          >
-            <label htmlFor="command-prompt">What do you want AI Matcher to do?</label>
-            <div className="prompt-box">
-              <textarea
-                id="command-prompt"
-                value={commandPrompt}
-                onChange={(event) => setCommandPrompt(event.target.value)}
-                placeholder="Describe the image classification task, matching mode, export goal, or review workflow..."
-              />
-              <button className="primary" disabled={!commandPrompt.trim()}>Start</button>
-            </div>
-          </form>
-          <div className="prompt-suggestions" aria-label="Recommended functions">
-            {PROMPT_SUGGESTIONS.map((item) => (
-              <button key={item} type="button" onClick={() => submitCommand(item)}>
-                {item}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {commandSubmitted && (
-          <>
-            <section className="composer workflow-controls">
-              <input value={projectName} onChange={(event) => setProjectName(event.target.value)} />
-              <div className="composer-actions">
-                <input className="file" type="file" accept="image/*,.zip" multiple disabled={!project || busy} onChange={(event) => handleUpload(event.target.files)} />
-                <select value={matchMode} disabled={busy} onChange={(event) => setMatchMode(event.target.value as MatchMode)}>
-                  {MATCH_MODES.map((mode) => (
-                    <option key={mode.value} value={mode.value}>{mode.label}</option>
-                  ))}
-                </select>
-                <button onClick={handleCreate} disabled={busy}>Create</button>
-                <button className="primary" onClick={handleMatch} disabled={!project || !project.image_count || busy}>Run</button>
-                <button onClick={handleCancel} disabled={!activeJobId}>Cancel</button>
-              </div>
-            </section>
 
         <section className="status-strip">
           <div>
@@ -922,118 +636,6 @@ function App() {
             );
           })}
         </section>
-
-        <section className="motion-wall-section" aria-label="Dynamic workflow wall">
-          <div className="section-title">
-            <h2>Workflow Wall</h2>
-            <span>Auto-scrolling product moments</span>
-          </div>
-          <div className="motion-wall">
-            <div className="motion-track motion-track-forward">
-              {[...MOTION_WALL_ITEMS, ...MOTION_WALL_ITEMS].map((item, index) => (
-                <article className={`motion-card tone-${item.tone}`} key={`forward-${item.title}-${index}`}>
-                  <span>{item.tag}</span>
-                  <strong>{item.title}</strong>
-                  <p>{item.text}</p>
-                  <small>{item.metric}</small>
-                </article>
-              ))}
-            </div>
-            <div className="motion-track motion-track-reverse">
-              {[...MOTION_WALL_ITEMS.slice().reverse(), ...MOTION_WALL_ITEMS.slice().reverse()].map((item, index) => (
-                <article className={`motion-card tone-${item.tone}`} key={`reverse-${item.title}-${index}`}>
-                  <span>{item.tag}</span>
-                  <strong>{item.title}</strong>
-                  <p>{item.text}</p>
-                  <small>{item.metric}</small>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="faq-section" aria-label="Frequently asked questions">
-          <div className="faq-intro">
-            <span>FAQ</span>
-            <h2>Questions before your next match run</h2>
-            <p>Short answers for the workflow details users usually need before uploading, reviewing, and exporting.</p>
-          </div>
-          <div className="faq-list">
-            {FAQ_ITEMS.map((item, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <article className={isOpen ? "faq-item open" : "faq-item"} key={item.question}>
-                  <button onClick={() => setOpenFaq(isOpen ? -1 : index)} aria-expanded={isOpen}>
-                    <span>{item.question}</span>
-                    <strong>{isOpen ? "-" : "+"}</strong>
-                  </button>
-                  {isOpen && <p>{item.answer}</p>}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-          </>
-        )}
-
-        <footer className="site-footer">
-          <div className="footer-brand">
-            <div className="footer-logo">
-              <img src="/guardian-logo.png" alt="AI Matcher logo" />
-              <div>
-                <strong>AI Matcher</strong>
-                <span>Guardian workspace</span>
-              </div>
-            </div>
-            <p>Professional image matching, correction, and export tools for focused visual datasets.</p>
-            <div className="locale-row">
-              <label>
-                <span>Language</span>
-                <select value={footerLanguage} onChange={(event) => setFooterLanguage(event.target.value)}>
-                  <option value="zh-Hant">繁體中文</option>
-                  <option value="en">English</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                </select>
-              </label>
-              <label>
-                <span>Region</span>
-                <select value={footerRegion} onChange={(event) => setFooterRegion(event.target.value)}>
-                  <option value="TW">Taiwan</option>
-                  <option value="US">United States</option>
-                  <option value="JP">Japan</option>
-                  <option value="KR">Korea</option>
-                </select>
-              </label>
-            </div>
-          </div>
-          <div className="footer-links">
-            {FOOTER_LINK_GROUPS.map((group) => (
-              <nav className="footer-column" key={group.title} aria-label={group.title}>
-                <strong>{group.title}</strong>
-                {group.links.map((link) => (
-                  <a key={link.label} href={link.href}>
-                    {link.label}
-                  </a>
-                ))}
-              </nav>
-            ))}
-            <nav className="footer-column social-column" aria-label="Social media">
-              <strong>Social</strong>
-              <div className="social-links">
-                {SOCIAL_LINKS.map((link) => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} title={link.label}>
-                    <span>{link.logo}</span>
-                  </a>
-                ))}
-              </div>
-            </nav>
-          </div>
-          <div className="footer-bottom">
-            <span>© 2026 AI Matcher Studio</span>
-            <span>{footerLanguage} · {footerRegion}</span>
-          </div>
-        </footer>
       </section>
 
       {preview && project && (
